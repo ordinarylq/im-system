@@ -293,4 +293,46 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
 
         return ResponseVO.successResponse();
     }
+
+    @Override
+    public ResponseVO getAllFriendship(GetAllFriendshipReq req) {
+        ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
+        if (!singleUserInfo.isOk()) {
+            return singleUserInfo;
+        }
+
+        QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", req.getAppId())
+                .eq("from_id", req.getUserId())
+                .eq("status", FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
+
+        return ResponseVO.successResponse(this.imFriendshipMapper.selectList(queryWrapper));
+    }
+
+    @Override
+    public ResponseVO getFriendship(GetFriendshipReq req) {
+        ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
+        if (!singleUserInfo.isOk()) {
+            return singleUserInfo;
+        }
+
+        ResponseVO<ImUserDAO> friendUserInfo = imUserService.getSingleUserInfo(req.getFriendUserId(), req.getAppId());
+        if (!friendUserInfo.isOk()) {
+            return friendUserInfo;
+        }
+
+        QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", req.getAppId())
+                .eq("from_id", req.getUserId())
+                .eq("to_id", req.getFriendUserId())
+                .eq("status", FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
+        ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
+
+        // 如果查不到，则返回FRIENDSHIP_IS_NOT_EXIST
+        if(imFriendshipDAO == null) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIENDSHIP_IS_NOT_EXIST);
+        }
+
+        return ResponseVO.successResponse(imFriendshipDAO);
+    }
 }

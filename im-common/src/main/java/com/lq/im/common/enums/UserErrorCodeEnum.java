@@ -29,11 +29,11 @@ public enum UserErrorCodeEnum implements ApplicationExceptionEnum {
 
     @Override
     public int getCode() {
-        return 0;
+        return this.code;
     }
 
     @Override
     public String getError() {
-        return null;
+        return this.error;
     }
 }
