@@ -7,9 +7,10 @@ import com.lq.im.common.enums.FriendShipErrorCodeEnum;
 import com.lq.im.common.enums.FriendshipStatusEnum;
 import com.lq.im.service.friendship.mapper.ImFriendshipMapper;
 import com.lq.im.service.friendship.model.ImFriendshipDAO;
-import com.lq.im.service.friendship.model.req.AddFriendReq;
+import com.lq.im.service.friendship.model.req.AddFriendshipReq;
 import com.lq.im.service.friendship.model.req.FriendInfo;
 import com.lq.im.service.friendship.model.req.ImportFriendshipReq;
+import com.lq.im.service.friendship.model.req.UpdateFriendshipReq;
 import com.lq.im.service.friendship.model.resp.ImportFriendshipResp;
 import com.lq.im.service.friendship.service.ImFriendshipService;
 import com.lq.im.service.user.model.ImUserDAO;
@@ -17,6 +18,7 @@ import com.lq.im.service.user.service.ImUserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 
@@ -136,7 +138,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
     }
 
     @Override
-    public ResponseVO addFriend(AddFriendReq req) {
+    public ResponseVO addFriendship(AddFriendshipReq req) {
         // 先判断这两个用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
         if (!singleUserInfo.isOk()) {
@@ -202,4 +204,42 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
 
         return ResponseVO.successResponse();
     }
+
+    @Override
+    public ResponseVO updateFriendship(UpdateFriendshipReq req) {
+        // todo 抽离公共部分
+        // 先判断这两个用户是否存在
+        ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
+        if (!singleUserInfo.isOk()) {
+            return singleUserInfo;
+        }
+
+        ResponseVO<ImUserDAO> friendUserInfo = imUserService.getSingleUserInfo(
+                req.getFriendInfo().getFriendUserId(), req.getAppId());
+        if (!friendUserInfo.isOk()) {
+            return friendUserInfo;
+        }
+
+        return doInternalUpdateFriendship(req.getUserId(), req.getFriendInfo(), req.getAppId());
+    }
+
+    @Transactional
+    ResponseVO doInternalUpdateFriendship(String userId, FriendInfo friendInfo, Integer appId) {
+
+        UpdateWrapper<ImFriendshipDAO> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.set(!StringUtils.isEmpty(friendInfo.getRemark()), "remark", friendInfo.getRemark())
+                .set(!StringUtils.isEmpty(friendInfo.getAddSource()), "add_source", friendInfo.getAddSource())
+                .set(!StringUtils.isEmpty(friendInfo.getExtra()), "extra", friendInfo.getExtra())
+                .eq("app_id", appId)
+                .eq("from_id", userId)
+                .eq("to_id", friendInfo.getFriendUserId());
+        int updateResult = this.imFriendshipMapper.update(null, updateWrapper);
+        if(updateResult != 1) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.UPDATE_FRIENDSHIP_FAIL);
+        }
+        return ResponseVO.successResponse();
+    }
+
+
+
 }

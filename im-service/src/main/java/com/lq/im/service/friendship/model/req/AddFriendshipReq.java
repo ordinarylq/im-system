@@ -9,7 +9,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 /**
- * @ClassName: AddFriendReq
+ * @ClassName: AddFriendshipReq
  * @Author: LiQi
  * @Date: 2023-04-14 8:49
  * @Version: V1.0
@@ -18,7 +18,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddFriendReq extends RequestBase {
+public class AddFriendshipReq extends RequestBase {
     @NotNull(message = "userId不能为空")
     private String userId;
 

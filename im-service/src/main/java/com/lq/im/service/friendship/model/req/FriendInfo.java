@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 
 /**
  * @ClassName: FriendInfo
@@ -18,7 +18,7 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FriendInfo {
-    @NotNull(message = "friendUserId不能为空")
+    @NotBlank(message = "friendUserId不能为空")
     private String friendUserId;
 
     private String remark;

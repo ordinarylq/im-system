@@ -1,12 +1,11 @@
 package com.lq.im.service.friendship.controller;
 
 import com.lq.im.common.ResponseVO;
-import com.lq.im.service.friendship.model.req.AddFriendReq;
+import com.lq.im.service.friendship.model.req.AddFriendshipReq;
 import com.lq.im.service.friendship.model.req.ImportFriendshipReq;
+import com.lq.im.service.friendship.model.req.UpdateFriendshipReq;
 import com.lq.im.service.friendship.service.ImFriendshipService;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import sun.plugin2.main.server.AppletID;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -32,8 +31,15 @@ public class ImFriendshipController {
     }
 
     @PostMapping("/add")
-    public ResponseVO addFriendship(@RequestBody @Valid AddFriendReq req, @RequestParam("app-id") Integer appId) {
+    public ResponseVO addFriendship(@RequestBody @Valid AddFriendshipReq req, @RequestParam("app-id") Integer appId) {
         req.setAppId(appId);
-        return this.imFriendshipService.addFriend(req);
+        return this.imFriendshipService.addFriendship(req);
     }
+
+    @PostMapping("/update")
+    public ResponseVO updateFriendship(@RequestBody @Valid UpdateFriendshipReq req, @RequestParam("app-id") Integer appId) {
+        req.setAppId(appId);
+        return this.imFriendshipService.updateFriendship(req);
+    }
+
 }
