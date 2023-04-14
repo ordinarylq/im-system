@@ -2,6 +2,7 @@ package com.lq.im.service.friendship.service;
 
 import com.lq.im.common.ResponseVO;
 import com.lq.im.service.friendship.model.req.AddFriendshipReq;
+import com.lq.im.service.friendship.model.req.DeleteFriendshipReq;
 import com.lq.im.service.friendship.model.req.ImportFriendshipReq;
 import com.lq.im.service.friendship.model.req.UpdateFriendshipReq;
 
@@ -36,4 +37,21 @@ public interface ImFriendshipService {
      * @return ResponseVO
      */
     ResponseVO updateFriendship(UpdateFriendshipReq req);
+
+    /**
+     * 删除好友关系
+     * @author LiQi
+     * @param req 请求(包含用户id, 好友id)
+     * @return ResponseVO
+     */
+    ResponseVO deleteFriendship(DeleteFriendshipReq req);
+
+    /**
+     * 删除某用户的所有好友
+     * @author LiQi
+     * @param userId 用户id
+	 * @param appId 应用id
+     * @return ResponseVO
+     */
+    ResponseVO deleteAllFriendship(String userId, Integer appId);
 }

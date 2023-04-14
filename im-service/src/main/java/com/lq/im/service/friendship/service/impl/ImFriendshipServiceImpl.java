@@ -7,10 +7,7 @@ import com.lq.im.common.enums.FriendShipErrorCodeEnum;
 import com.lq.im.common.enums.FriendshipStatusEnum;
 import com.lq.im.service.friendship.mapper.ImFriendshipMapper;
 import com.lq.im.service.friendship.model.ImFriendshipDAO;
-import com.lq.im.service.friendship.model.req.AddFriendshipReq;
-import com.lq.im.service.friendship.model.req.FriendInfo;
-import com.lq.im.service.friendship.model.req.ImportFriendshipReq;
-import com.lq.im.service.friendship.model.req.UpdateFriendshipReq;
+import com.lq.im.service.friendship.model.req.*;
 import com.lq.im.service.friendship.model.resp.ImportFriendshipResp;
 import com.lq.im.service.friendship.service.ImFriendshipService;
 import com.lq.im.service.user.model.ImUserDAO;
@@ -29,6 +26,7 @@ import javax.annotation.Resource;
  * @Version: V1.0
  * @Description:
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 public class ImFriendshipServiceImpl implements ImFriendshipService {
 
@@ -240,6 +238,59 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         return ResponseVO.successResponse();
     }
 
+    @Override
+    public ResponseVO deleteFriendship(DeleteFriendshipReq req) {
+        // 1. 查询两个用户是否存在
+        ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
+        if (!singleUserInfo.isOk()) {
+            return singleUserInfo;
+        }
 
+        ResponseVO<ImUserDAO> friendUserInfo = imUserService.getSingleUserInfo(req.getFriendUserId(), req.getAppId());
+        if (!friendUserInfo.isOk()) {
+            return friendUserInfo;
+        }
 
+        // 2. 获取a-b的关系
+        QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", req.getAppId())
+                .eq("from_id", req.getUserId())
+                .eq("to_id", req.getFriendUserId());
+        ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
+        // 2.1 若没有关系则返回不是好友
+        if(imFriendshipDAO == null) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.TO_IS_NOT_YOUR_FRIEND);
+        }
+        // 2.2 若有关系且状态为正常，则更新状态为删除
+        if(imFriendshipDAO.getStatus() != null &&
+                imFriendshipDAO.getStatus() == FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode()) {
+
+            ImFriendshipDAO imFriendshipDAO1 = new ImFriendshipDAO();
+            imFriendshipDAO1.setStatus(FriendshipStatusEnum.FRIEND_STATUS_DELETE.getCode());
+            int updateResult = this.imFriendshipMapper.update(imFriendshipDAO1, queryWrapper);
+            if(updateResult != 1) {
+                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.DELETE_FRIENDSHIP_FAIL);
+            }
+
+        } else {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_IS_DELETED);
+        }
+
+        return ResponseVO.successResponse();
+    }
+
+    @Override
+    public ResponseVO deleteAllFriendship(String userId, Integer appId) {
+        QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", appId)
+                .eq("from_id", userId)
+                .eq("status", FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
+
+        ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
+        imFriendshipDAO.setStatus(FriendshipStatusEnum.FRIEND_STATUS_DELETE.getCode());
+
+        this.imFriendshipMapper.update(imFriendshipDAO, queryWrapper);
+
+        return ResponseVO.successResponse();
+    }
 }
