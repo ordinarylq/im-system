@@ -70,5 +70,12 @@ public class ImFriendshipController {
         return this.imFriendshipService.getAllFriendship(req);
     }
 
+    @PostMapping("/check")
+    public ResponseVO checkFriendship(@RequestBody @Valid CheckFriendshipReq req,
+                                      @RequestParam("app-id") @NotBlank Integer appId) {
+        req.setAppId(appId);
+        return this.imFriendshipService.checkFriendship(req);
+    }
+
 
 }

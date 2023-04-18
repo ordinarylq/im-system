@@ -68,5 +68,13 @@ public interface ImFriendshipService {
      */
     ResponseVO getFriendship(GetFriendshipReq req);
 
+    /**
+     * 批量校验好友关系
+     * @author LiQi
+     * @param req 请求(包含用户id, 待校验好友id列表)
+     * @return ResponseVO
+     */
+    ResponseVO checkFriendship(CheckFriendshipReq req);
+
 
 }

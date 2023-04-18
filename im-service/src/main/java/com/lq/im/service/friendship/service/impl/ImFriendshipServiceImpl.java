@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.FriendShipErrorCodeEnum;
+import com.lq.im.common.enums.FriendshipCheckEnum;
 import com.lq.im.common.enums.FriendshipStatusEnum;
 import com.lq.im.service.friendship.mapper.ImFriendshipMapper;
 import com.lq.im.service.friendship.model.ImFriendshipDAO;
 import com.lq.im.service.friendship.model.req.*;
+import com.lq.im.service.friendship.model.resp.CheckFriendshipResp;
 import com.lq.im.service.friendship.model.resp.ImportFriendshipResp;
 import com.lq.im.service.friendship.service.ImFriendshipService;
 import com.lq.im.service.user.model.ImUserDAO;
@@ -18,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName: ImFriendshipServiceImpl
@@ -334,5 +338,29 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         }
 
         return ResponseVO.successResponse(imFriendshipDAO);
+    }
+
+    @Override
+    public ResponseVO checkFriendship(CheckFriendshipReq req) {
+        List<CheckFriendshipResp> resp = null;
+        if(Objects.equals(req.getCheckType(), FriendshipCheckEnum.SINGLE.getType())) {
+            // 1-单向校验
+            resp = this.imFriendshipMapper.singleCheckFriendshipStatus(req);
+        } else if(Objects.equals(req.getCheckType(), FriendshipCheckEnum.BOTH.getType())) {
+            // 2-双向校验
+            resp = this.imFriendshipMapper.bothCheckFriendshipStatus(req);
+        }
+
+        // 将不在im_friendship中的好友取出
+        assert resp != null;
+        Set<String> respIdSet = resp.stream().map(CheckFriendshipResp::getToId).collect(Collectors.toSet());
+        for (String friendId : req.getFriendIdList()) {
+            if(!respIdSet.contains(friendId)) {
+                CheckFriendshipResp checkFriendshipResp = new CheckFriendshipResp(req.getAppId(), req.getUserId(), friendId, FriendshipStatusEnum.FRIEND_STATUS_NO_FRIEND.getCode());
+                resp.add(checkFriendshipResp);
+            }
+        }
+
+        return ResponseVO.successResponse(resp);
     }
 }

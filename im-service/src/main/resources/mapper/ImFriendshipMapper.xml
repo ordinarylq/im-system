@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lq.im.service.friendship.mapper.ImFriendshipMapper">
+
+    <resultMap id="CheckFriendshipResultMap" type="com.lq.im.service.friendship.model.resp.CheckFriendshipResp">
+        <result column="app_id" property="appId" />
+        <result column="from_id" property="fromId" />
+        <result column="to_id" property="toId" />
+        <result column="status" property="status" />
+    </resultMap>
+
+
+    <!--List<CheckFriendshipResp> checkFriendshipStatus(CheckFriendshipReq req);-->
+    <select id="singleCheckFriendshipStatus" resultMap="CheckFriendshipResultMap">
+        SELECT i.app_id, i.from_id, i.to_id, if(i.status = 1, 1, 0) as status
+        FROM im_friendship i
+        WHERE  i.app_id = #{appId} and i.from_id = #{userId}
+        AND  i.to_id in
+        <foreach collection="friendIdList" item="friendId" open="(" close=")" separator=",">
+            #{friendId}
+        </foreach>
+    </select>
+
+    <!--List<CheckFriendshipResp> bothCheckFriendshipStatus(CheckFriendshipReq req);-->
+    <select id="bothCheckFriendshipStatus" resultMap="CheckFriendshipResultMap">
+        SELECT a.app_id, a.from_id, a.to_id,
+               (CASE
+                    WHEN a.status = 1 AND b.status = 1 THEN 1
+                    WHEN a.status = 1 AND b.status != 1 THEN 2
+                    WHEN a.status != 1 AND b.status = 1 THEN 3
+                    WHEN a.status != 1 AND b.status != 1 THEN 4
+               END ) AS status
+        FROM im_friendship a
+        INNER JOIN im_friendship b ON a.from_id = b.to_id AND a.to_id  = b.from_id
+        WHERE a.app_id = #{appId} AND b.app_id = #{appId} AND a.from_id = #{userId}
+        AND a.to_id IN
+        <foreach collection="friendIdList" item="friendId" open="(" close=")" separator=",">
+            #{friendId}
+        </foreach>
+    </select>
+
+</mapper>
