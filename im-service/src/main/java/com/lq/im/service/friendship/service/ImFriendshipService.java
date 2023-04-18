@@ -76,5 +76,36 @@ public interface ImFriendshipService {
      */
     ResponseVO checkFriendship(CheckFriendshipReq req);
 
+    /**
+     * 批量导入黑名单
+     * @author LiQi
+     * @param req 请求(包含用户id, 待拉黑用户id列表)
+     * @return ResponseVO
+     */
+    ResponseVO importBlacklist(ImportBlacklistReq req);
 
+    /**
+     * 添加黑名单
+     * @author LiQi
+     * @param req 请求(包含用户id, 待拉黑用户id)
+     * @return ResponseVO
+     */
+    ResponseVO addBlacklist(AddFriendShipBlackReq req);
+
+
+    /**
+     * 删除黑名单
+     * @author LiQi
+     * @param req 请求(包含用户id, 待拉黑用户id)
+     * @return ResponseVO
+     */
+    ResponseVO deleteBlacklist(DeleteBlackReq req);
+
+    /**
+     * 校验黑名单
+     * @author LiQi
+     * @param req
+     * @return ResponseVO
+     */
+    ResponseVO checkBlacklist(CheckFriendshipReq req);
 }

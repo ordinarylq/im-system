@@ -10,6 +10,7 @@ import com.lq.im.service.friendship.mapper.ImFriendshipMapper;
 import com.lq.im.service.friendship.model.ImFriendshipDAO;
 import com.lq.im.service.friendship.model.req.*;
 import com.lq.im.service.friendship.model.resp.CheckFriendshipResp;
+import com.lq.im.service.friendship.model.resp.ImportBlacklistResp;
 import com.lq.im.service.friendship.model.resp.ImportFriendshipResp;
 import com.lq.im.service.friendship.service.ImFriendshipService;
 import com.lq.im.service.user.model.ImUserDAO;
@@ -50,74 +51,6 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.IMPORT_SIZE_BEYOND);
         }
         ImportFriendshipResp resp = new ImportFriendshipResp();
-        /*
-        // 首先判断a是否存在
-        ResponseVO<ImUserDAO> userInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
-        if (!userInfo.isOk()) {
-            return userInfo;
-        }
-
-
-        for (ImportFriendshipReq.FriendInfo friend : req.getFriendInfoList()) {
-            // 循环朋友列表，判断这个朋友是否存在
-            ResponseVO<ImUserDAO> friendUserInfo = this.imUserService.getSingleUserInfo(friend.getFriendUserId(), req.getAppId());
-            if (!friendUserInfo.isOk()) {
-                // 如果不存在，添加到失败列表
-                resp.getFailFriendIdList().add(friend.getFriendUserId());
-                continue;
-            }
-            // 如果存在，判断用户和该朋友的当前关系
-            QueryWrapper<ImFriendshipDAO> wrapper = new QueryWrapper<>();
-            wrapper.eq("app_id", req.getAppId())
-                    .eq("from_id", req.getUserId())
-                    .eq("to_id", friend.getFriendUserId());
-            ImFriendshipDAO friendshipDAO = this.imFriendshipMapper.selectOne(wrapper);
-
-            ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
-            BeanUtils.copyProperties(friend, imFriendshipDAO);
-            imFriendshipDAO.setAppId(req.getAppId());
-            imFriendshipDAO.setUserId(req.getUserId());
-
-            if (friendshipDAO == null) {
-                // 用户与该朋友没有建立好友关系
-                // 添加好友关系
-                imFriendshipDAO.setStatus(FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
-                imFriendshipDAO.setBlack(FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode());
-                imFriendshipDAO.setCreateTime(System.currentTimeMillis());
-
-                try {
-                    int insertResult = this.imFriendshipMapper.insert(imFriendshipDAO);
-                    if (insertResult == 1) {
-                        resp.getSuccessFriendIdList().add(friend.getFriendUserId());
-                    } else {
-                        resp.getFailFriendIdList().add(friend.getFriendUserId());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    resp.getFailFriendIdList().add(friend.getFriendUserId());
-                }
-            } else {
-                // 用户与该朋友已经建立好友关系
-                // 更新状态
-                UpdateWrapper<ImFriendshipDAO> updateWrapper = new UpdateWrapper<>();
-                updateWrapper.eq("app_id", req.getAppId())
-                        .eq("from_id", req.getUserId())
-                        .eq("to_id", friend.getFriendUserId());
-
-                try {
-                    int updateResult = this.imFriendshipMapper.update(imFriendshipDAO, updateWrapper);
-                    if(updateResult == 1) {
-                        resp.getSuccessFriendIdList().add(friend.getFriendUserId());
-                    } else {
-                        resp.getFailFriendIdList().add(friend.getFriendUserId());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    resp.getFailFriendIdList().add(friend.getFriendUserId());
-                }
-            }
-        }
-         */
         for (FriendInfo friendInfo : req.getFriendInfoList()) {
             ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
             BeanUtils.copyProperties(friendInfo, imFriendshipDAO);
@@ -357,6 +290,168 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         for (String friendId : req.getFriendIdList()) {
             if(!respIdSet.contains(friendId)) {
                 CheckFriendshipResp checkFriendshipResp = new CheckFriendshipResp(req.getAppId(), req.getUserId(), friendId, FriendshipStatusEnum.FRIEND_STATUS_NO_FRIEND.getCode());
+                resp.add(checkFriendshipResp);
+            }
+        }
+
+        return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    public ResponseVO importBlacklist(ImportBlacklistReq req) {
+        if(req.getFriendUserIdList() == null) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.REQUEST_DATA_IS_NOT_EXIST);
+        }
+        if(req.getFriendUserIdList().size() > 100) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.IMPORT_SIZE_BEYOND);
+        }
+
+        ImportBlacklistResp resp = new ImportBlacklistResp();
+
+        for (String userId : req.getFriendUserIdList()) {
+            QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("app_id", req.getAppId())
+                    .eq("from_id", req.getUserId())
+                    .eq("to_id", userId);
+
+            ImportBlacklistResp.ResultItem resultItem = new ImportBlacklistResp.ResultItem();
+            resultItem.setUserId(userId);
+
+            ImFriendshipDAO selectResult = this.imFriendshipMapper.selectOne(queryWrapper);
+            if(selectResult == null) {
+                resultItem.setCodeAndMessage(FriendShipErrorCodeEnum.FRIENDSHIP_IS_NOT_EXIST);
+                resp.getFailList().add(userId);
+            } else if (selectResult.getBlack() == FriendshipStatusEnum.BLACK_STATUS_BLACKED.getCode()) {
+                resultItem.setCodeAndMessage(FriendShipErrorCodeEnum.FRIEND_IS_BLACK);
+                resp.getFailList().add(userId);
+            } else {
+                // 更新拉黑状态
+                ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
+                imFriendshipDAO.setBlack(FriendshipStatusEnum.BLACK_STATUS_BLACKED.getCode());
+                try {
+                    int updateResult = this.imFriendshipMapper.update(imFriendshipDAO, queryWrapper);
+                    if(updateResult == 1) {
+                        resultItem.setResultCode(0);
+                        resultItem.setResultMessage("");
+                    } else {
+                        resultItem.setCodeAndMessage(FriendShipErrorCodeEnum.ADD_BLACK_ERROR);
+                        resp.getFailList().add(userId);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    resultItem.setCodeAndMessage(FriendShipErrorCodeEnum.ADD_BLACK_ERROR);
+                    resp.getFailList().add(userId);
+                }
+            }
+            resp.getResultList().add(resultItem);
+        }
+        return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    public ResponseVO addBlacklist(AddFriendShipBlackReq req) {
+        // 1. 先查询两个用户是否存在
+        ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
+        if (!singleUserInfo.isOk()) {
+            return singleUserInfo;
+        }
+
+        ResponseVO<ImUserDAO> friendUserInfo = imUserService.getSingleUserInfo(
+                req.getFriendUserId(), req.getAppId());
+        if (!friendUserInfo.isOk()) {
+            return friendUserInfo;
+        }
+
+        // 2. 再查询关系链
+        QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", req.getAppId())
+                .eq("from_id", req.getUserId())
+                .eq("to_id", req.getFriendUserId());
+
+        ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
+        if(imFriendshipDAO == null) {
+            // 添加一条关系
+            ImFriendshipDAO imFriendshipDAO1 = new ImFriendshipDAO(req.getAppId(), req.getUserId(), req.getFriendUserId(),null,
+                    null, FriendshipStatusEnum.BLACK_STATUS_BLACKED.getCode(), null,System.currentTimeMillis(), null, null, null);
+
+            int insertResult = this.imFriendshipMapper.insert(imFriendshipDAO1);
+            if(insertResult != 1) {
+                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.ADD_BLACK_ERROR);
+            }
+            return ResponseVO.successResponse();
+        }
+        // 3. 再判断black字段
+        if(imFriendshipDAO.getBlack() == FriendshipStatusEnum.BLACK_STATUS_BLACKED.getCode()) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_IS_BLACK);
+        }
+        // 更新black字段
+        ImFriendshipDAO imFriendshipDAO1 = new ImFriendshipDAO();
+        imFriendshipDAO1.setBlack(FriendshipStatusEnum.BLACK_STATUS_BLACKED.getCode());
+
+        try {
+            int updateResult = this.imFriendshipMapper.update(imFriendshipDAO1, queryWrapper);
+            if(updateResult != 1) {
+                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.ADD_BLACK_ERROR);
+            }
+        } catch (Exception e) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.ADD_BLACK_ERROR);
+        }
+        return ResponseVO.successResponse();
+    }
+
+    @Override
+    public ResponseVO deleteBlacklist(DeleteBlackReq req) {
+        // 1. 查询用户是否存在
+        ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
+        if (!singleUserInfo.isOk()) {
+            return singleUserInfo;
+        }
+
+        ResponseVO<ImUserDAO> friendUserInfo = imUserService.getSingleUserInfo(
+                req.getFriendUserId(), req.getAppId());
+        if (!friendUserInfo.isOk()) {
+            return friendUserInfo;
+        }
+
+        // 2. 查询关系链
+        QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", req.getAppId())
+                .eq("from_id", req.getUserId())
+                .eq("to_id", req.getFriendUserId());
+
+        ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
+        // 2.1 若没有，或black状态不是2则抛FRIEND_IS_NOT_YOUR_BLACK
+        if(imFriendshipDAO == null || imFriendshipDAO.getBlack() == FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode()) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_IS_NOT_YOUR_BLACK);
+        }
+        // 2.2 更新black字段
+        ImFriendshipDAO imFriendshipDAO1 = new ImFriendshipDAO();
+        imFriendshipDAO1.setBlack(FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode());
+        int updateResult = this.imFriendshipMapper.update(imFriendshipDAO1, queryWrapper);
+        if(updateResult != 1) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.DELETE_BLACK_LIST_FAIL);
+        }
+        return ResponseVO.successResponse();
+    }
+
+    @Override
+    public ResponseVO checkBlacklist(CheckFriendshipReq req) {
+        List<CheckFriendshipResp> resp = null;
+        if(Objects.equals(req.getCheckType(), FriendshipCheckEnum.SINGLE.getType())) {
+            // 1-单向校验
+            resp = this.imFriendshipMapper.singleCheckBlacklist(req);
+        } else if(Objects.equals(req.getCheckType(), FriendshipCheckEnum.BOTH.getType())) {
+            // 2-双向校验
+            resp = this.imFriendshipMapper.bothCheckBlacklist(req);
+        }
+
+        // 将不在im_friendship中的好友取出
+        assert resp != null;
+        Set<String> collect = resp.stream().map(CheckFriendshipResp::getToId).collect(Collectors.toSet());
+        for (String userId : req.getFriendIdList()) {
+            if(!collect.contains(userId)) {
+                CheckFriendshipResp checkFriendshipResp = new CheckFriendshipResp(
+                        req.getAppId(), req.getUserId(), userId, 0);
                 resp.add(checkFriendshipResp);
             }
         }

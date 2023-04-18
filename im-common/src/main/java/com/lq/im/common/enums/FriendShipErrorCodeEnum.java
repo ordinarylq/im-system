@@ -44,6 +44,8 @@ public enum FriendShipErrorCodeEnum implements ApplicationExceptionEnum {
     UPDATE_FRIENDSHIP_FAIL(30018, "更新好友关系失败"),
 
     DELETE_FRIENDSHIP_FAIL(30019, "删除好友关系失败"),
+
+    DELETE_BLACK_LIST_FAIL(30020, "删除黑名单失败"),
     ;
 
     private final int code;

@@ -77,5 +77,32 @@ public class ImFriendshipController {
         return this.imFriendshipService.checkFriendship(req);
     }
 
+    @PostMapping("/import/blacklist")
+    public ResponseVO importBlacklist(@RequestBody @Valid ImportBlacklistReq req,
+                                      @RequestParam("app-id") @NotBlank Integer appId) {
+        req.setAppId(appId);
+        return this.imFriendshipService.importBlacklist(req);
+    }
+
+    @PostMapping("/add/blacklist")
+    public ResponseVO addBlacklist(@RequestBody @Valid AddFriendShipBlackReq req,
+                                   @RequestParam("app-id") @NotBlank Integer appId) {
+        req.setAppId(appId);
+        return this.imFriendshipService.addBlacklist(req);
+    }
+
+    @DeleteMapping("/delete/blacklist")
+    public ResponseVO deleteBlacklist(@RequestBody @Valid DeleteBlackReq req,
+                                   @RequestParam("app-id") @NotBlank Integer appId) {
+        req.setAppId(appId);
+        return this.imFriendshipService.deleteBlacklist(req);
+    }
+
+    @PostMapping("/check/blacklist")
+    public ResponseVO checkBlacklist(@RequestBody @Valid CheckFriendshipReq req,
+                                       @RequestParam("app-id") @NotBlank Integer appId) {
+        req.setAppId(appId);
+        return this.imFriendshipService.checkBlacklist(req);
+    }
 
 }

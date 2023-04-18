@@ -29,4 +29,14 @@ public interface ImFriendshipMapper extends BaseMapper<ImFriendshipDAO> {
      */
     List<CheckFriendshipResp> bothCheckFriendshipStatus(CheckFriendshipReq req);
 
+    /**
+     * 批量校验黑名单 单向校验
+     */
+    List<CheckFriendshipResp> singleCheckBlacklist(CheckFriendshipReq req);
+
+    /**
+     * 批量校验黑名单 双向校验
+     */
+    List<CheckFriendshipResp> bothCheckBlacklist(CheckFriendshipReq req);
+
 }
