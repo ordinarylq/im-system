@@ -1,0 +1,34 @@
+package com.lq.im.service.friendship.controller;
+
+import com.lq.im.common.ResponseVO;
+import com.lq.im.service.friendship.model.req.ApproveFriendRequestReq;
+import com.lq.im.service.friendship.service.ImFriendshipRequestService;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+
+/**
+ * @ClassName: ImFriendshipRequestController
+ * @Author: LiQi
+ * @Date: 2023-04-28 13:44
+ * @Version: V1.0
+ * @Description:
+ */
+@RestController
+@RequestMapping("/api/v1/friendship-request")
+public class ImFriendshipRequestController {
+
+    @Resource
+    private ImFriendshipRequestService imFriendshipRequestService;
+
+    @PostMapping("/approve")
+    public ResponseVO approveFriendship(@RequestBody @Valid ApproveFriendRequestReq req,
+                                        @RequestParam("app-id") Integer appId,
+                                        @RequestParam("operator") @NotBlank String operator) {
+        req.setAppId(appId);
+        req.setOperator(operator);
+        return this.imFriendshipRequestService.approveFriendRequest(req);
+    }
+}

@@ -75,7 +75,7 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
         ImFriendshipRequestDAO imFriendshipRequestDAO = this.imFriendshipRequestMapper.selectById(req.getId());
 
         if(imFriendshipRequestDAO == null) {
-            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIENDSHIP_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_REQUEST_IS_NOT_EXIST);
         }
         // 判断该请求记录的接收人与操作人一致
         if(!req.getOperator().equals(imFriendshipRequestDAO.getFriendId())) {
