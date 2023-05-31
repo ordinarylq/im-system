@@ -3,6 +3,7 @@ package com.lq.im.service.friendship.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.enums.AddFriendshipEnum;
 import com.lq.im.common.enums.FriendShipErrorCodeEnum;
 import com.lq.im.common.enums.FriendshipCheckEnum;
 import com.lq.im.common.enums.FriendshipStatusEnum;
@@ -12,6 +13,7 @@ import com.lq.im.service.friendship.model.req.*;
 import com.lq.im.service.friendship.model.resp.CheckFriendshipResp;
 import com.lq.im.service.friendship.model.resp.ImportBlacklistResp;
 import com.lq.im.service.friendship.model.resp.ImportFriendshipResp;
+import com.lq.im.service.friendship.service.ImFriendshipRequestService;
 import com.lq.im.service.friendship.service.ImFriendshipService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
@@ -40,6 +42,9 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
 
     @Resource
     private ImUserService imUserService;
+
+    @Resource
+    private ImFriendshipRequestService imFriendshipRequestService;
 
 
     @Override
@@ -86,11 +91,30 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             return friendUserInfo;
         }
         // 再添加
-        return doInternalAddFriend(req.getUserId(), req.getFriendInfo(), req.getAppId());
+        if(Objects.equals(friendUserInfo.getData().getFriendAllowType(), AddFriendshipEnum.NO_NEED_TO_CONFIRM.getCode())) {
+            // 不需要确认
+            return doInternalAddFriend(req.getUserId(), req.getFriendInfo(), req.getAppId());
+        } else {
+            // 需要确认
+            // 先查是否已经是好友关系了
+            QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("app_id", req.getAppId())
+                    .eq("from_id", req.getUserId())
+                    .eq("to_id", req.getFriendInfo().getFriendUserId());
+            ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
+            if(imFriendshipDAO == null || imFriendshipDAO.getStatus() != FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode()) {
+                // 不是则添加一条申请
+                return this.imFriendshipRequestService.addFriendRequest(req.getAppId(), req.getUserId(), req.getFriendInfo());
+            } else {
+                // 如果是则抛异常
+                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.TO_IS_YOUR_FRIEND);
+            }
+        }
     }
 
     @Transactional
-    ResponseVO doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId) {
+    public ResponseVO doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId) {
+        // a添加b
         // 先查a是否已添加b
         QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("app_id", appId)
@@ -137,6 +161,29 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             }
         }
 
+        // b添加a
+        // 先查询是否已添加
+        QueryWrapper<ImFriendshipDAO> anotherQueryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", appId)
+                .eq("from_id", friendInfo.getFriendUserId())
+                .eq("to_id", userId);
+        ImFriendshipDAO imFriendshipDAO1 = this.imFriendshipMapper.selectOne(queryWrapper);
+        if(imFriendshipDAO1 == null) {
+            imFriendshipDAO1 = new ImFriendshipDAO(appId, friendInfo.getFriendUserId(), userId, null, FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode(),
+                    FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode(), null, System.currentTimeMillis(), null, null, null);
+            int insertResult = this.imFriendshipMapper.insert(imFriendshipDAO1);
+            if (insertResult != 1) {
+                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.ADD_FRIEND_ERROR);
+            }
+        } else {
+            // 根据status判断
+            if(imFriendshipDAO1.getStatus() != FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode()) {
+                // 更新状态为normal
+                imFriendshipDAO1 = new ImFriendshipDAO();
+                imFriendshipDAO1.setStatus(FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
+                this.imFriendshipMapper.update(imFriendshipDAO1, anotherQueryWrapper);
+            }
+        }
         return ResponseVO.successResponse();
     }
 

@@ -15,4 +15,9 @@ public class RequestBase {
      * 应用id
      */
     private Integer appId;
+
+    /**
+     * 操作人
+     */
+    private String operator;
 }

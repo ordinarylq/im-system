@@ -26,6 +26,10 @@ public interface ImFriendshipService {
      */
     ResponseVO addFriendship(AddFriendshipReq req);
 
+    /**
+     * 添加好友
+     */
+    ResponseVO doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId);
 
     /**
      * 更新好友关系
