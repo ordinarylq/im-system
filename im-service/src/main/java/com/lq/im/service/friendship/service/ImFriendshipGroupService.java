@@ -15,7 +15,7 @@ public interface ImFriendshipGroupService {
     /**
      * 添加好友分组
      * <p></p>
-     * 支持添加分组时添加好友
+     * 支持添加分组时添加分组包含的好友
      * @author LiQi
      * @param req 请求
      * @return ResponseVO

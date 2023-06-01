@@ -35,6 +35,8 @@ public enum FriendShipErrorCodeEnum implements ApplicationExceptionEnum {
 
     FRIEND_SHIP_GROUP_CREATE_ERROR(30014,"好友分组创建失败"),
 
+    FRIEND_SHIP_GROUP_DELETE_ERROR(30014,"好友分组删除失败"),
+
     FRIEND_SHIP_GROUP_IS_EXIST(30015,"好友分组已存在"),
 
     FRIEND_SHIP_GROUP_IS_NOT_EXIST(30016,"好友分组不存在"),

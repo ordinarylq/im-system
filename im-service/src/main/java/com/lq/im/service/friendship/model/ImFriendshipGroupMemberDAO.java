@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("im_friendship_group")
+@TableName("im_friendship_group_member")
 public class ImFriendshipGroupMemberDAO {
 
     /**

@@ -12,12 +12,15 @@ import com.lq.im.service.friendship.model.ImFriendshipGroupMemberDAO;
 import com.lq.im.service.friendship.model.ImFriendshipRequestDAO;
 import com.lq.im.service.friendship.model.req.AddFriendshipGroupReq;
 import com.lq.im.service.friendship.model.req.RemoveFriendshipGroupReq;
+import com.lq.im.service.friendship.model.resp.DeleteFriendshipGroupResp;
+import com.lq.im.service.friendship.service.ImFriendshipGroupMemberService;
 import com.lq.im.service.friendship.service.ImFriendshipGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.model.resp.AddGroupResp;
 import com.lq.im.service.user.service.ImUserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -37,7 +40,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
     private ImFriendshipGroupMapper imFriendshipGroupMapper;
 
     @Resource
-    private ImFriendshipGroupMemberMapper imFriendshipGroupMemberMapper;
+    private ImFriendshipGroupMemberService imFriendshipGroupMemberService;
 
     @Resource
     private ImUserService imUserService;
@@ -92,13 +95,14 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
         if(!CollectionUtils.isEmpty(req.getFriendIdList())) {
             req.getFriendIdList().forEach(friendId -> {
                 try {
-                    int insert = this.imFriendshipGroupMemberMapper.insert(new ImFriendshipGroupMemberDAO(groupDAO.getId(), friendId));
+                    int insert = this.imFriendshipGroupMemberService.addGroupMember(groupDAO.getId(), friendId);
                     if(insert == 1) {
                         addGroupResp.getSuccessUserIdList().add(friendId);
                     } else {
                         addGroupResp.getFailUserIdList().add(friendId);
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                     addGroupResp.getFailUserIdList().add(friendId);
                 }
             });
@@ -108,10 +112,46 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
     }
 
     @Override
+    @Transactional
     public ResponseVO removeGroup(RemoveFriendshipGroupReq req) {
+        // 1. 首先判断用户是否存在
+        ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
+        if(singleUserInfo == null || !singleUserInfo.isOk()) {
+            // 不存在则返回用户不存在
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+        }
 
+        DeleteFriendshipGroupResp resp = new DeleteFriendshipGroupResp();
+        for(String groupName: req.getGroupNameList()) {
+            // 2. 先查询是否存在该分组
+            QueryWrapper<ImFriendshipGroupDAO> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("app_id", req.getAppId())
+                    .eq("user_id", req.getUserId())
+                    .eq("group_name", groupName)
+                    .eq("del_flag", DelFlagEnum.NORMAL.getCode());
 
-        return null;
+            ImFriendshipGroupDAO imFriendshipGroupDAO = this.imFriendshipGroupMapper.selectOne(queryWrapper);
+            if(imFriendshipGroupDAO == null) {
+                resp.getFailGroupNameList().add(new DeleteFriendshipGroupResp.ResultItem(
+                        groupName, FriendShipErrorCodeEnum.FRIEND_SHIP_GROUP_IS_NOT_EXIST.getError()));
+                continue;
+            }
+
+            // 1.软删除分组 2.清空成员列表
+            ImFriendshipGroupDAO updateGroupDAO = new ImFriendshipGroupDAO();
+            updateGroupDAO.setId(imFriendshipGroupDAO.getId());
+            updateGroupDAO.setUpdateTime(System.currentTimeMillis());
+            updateGroupDAO.setDelFlag(DelFlagEnum.DELETED.getCode());
+            int deleteResult = this.imFriendshipGroupMapper.updateById(updateGroupDAO);
+            if(deleteResult != 1) {
+                resp.getFailGroupNameList().add(new DeleteFriendshipGroupResp.ResultItem(
+                        groupName, FriendShipErrorCodeEnum.FRIEND_SHIP_GROUP_DELETE_ERROR.getError()));
+            }
+            resp.getSuccessGroupNameList().add(groupName);
+            this.imFriendshipGroupMemberService.clearGroupMember(imFriendshipGroupDAO.getId());
+        }
+
+        return ResponseVO.successResponse(resp);
     }
 
     @Override
