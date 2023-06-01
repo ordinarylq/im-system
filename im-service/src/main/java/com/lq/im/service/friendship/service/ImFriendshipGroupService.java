@@ -1,6 +1,7 @@
 package com.lq.im.service.friendship.service;
 
 import com.lq.im.common.ResponseVO;
+import com.lq.im.service.friendship.model.ImFriendshipGroupDAO;
 import com.lq.im.service.friendship.model.req.AddFriendshipGroupReq;
 import com.lq.im.service.friendship.model.req.RemoveFriendshipGroupReq;
 
@@ -39,7 +40,7 @@ public interface ImFriendshipGroupService {
 	 * @param groupName 分组名称
      * @return ResponseVO 分组详情
      */
-    ResponseVO getGroup(String appId, String userId, String groupName);
+    ResponseVO<ImFriendshipGroupDAO> getGroup(Integer appId, String userId, String groupName);
 
     /**
      * 更新指定名称的分组信息
@@ -49,5 +50,5 @@ public interface ImFriendshipGroupService {
 	 * @param groupName 分组名称
      * @return Long 1-更新成功 0-更新失败
      */
-    Long modifyGroup(String appId, String userId, String groupName);
+    Long modifyGroup(Integer appId, String userId, String groupName);
 }

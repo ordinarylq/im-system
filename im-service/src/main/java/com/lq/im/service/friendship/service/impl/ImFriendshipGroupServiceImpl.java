@@ -18,6 +18,7 @@ import com.lq.im.service.friendship.service.ImFriendshipGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.model.resp.AddGroupResp;
 import com.lq.im.service.user.service.ImUserService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -155,12 +156,29 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
     }
 
     @Override
-    public ResponseVO getGroup(String appId, String userId, String groupName) {
-        return null;
+    public ResponseVO getGroup(Integer appId, String userId, String groupName) {
+        // 1. 首先判断用户是否存在
+        ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(userId, appId);
+        if(singleUserInfo == null || !singleUserInfo.isOk()) {
+            // 不存在则返回用户不存在
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+        }
+
+        QueryWrapper<ImFriendshipGroupDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", appId)
+                .eq("user_id", userId)
+                .eq("group_name", groupName)
+                .eq("del_flag", DelFlagEnum.NORMAL.getCode());
+
+        ImFriendshipGroupDAO imFriendshipGroupDAO = this.imFriendshipGroupMapper.selectOne(queryWrapper);
+        if(imFriendshipGroupDAO == null) {
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_SHIP_GROUP_IS_NOT_EXIST);
+        }
+        return ResponseVO.successResponse(imFriendshipGroupDAO);
     }
 
     @Override
-    public Long modifyGroup(String appId, String userId, String groupName) {
+    public Long modifyGroup(Integer appId, String userId, String groupName) {
         return null;
     }
 }

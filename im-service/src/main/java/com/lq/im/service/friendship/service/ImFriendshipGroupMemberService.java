@@ -1,5 +1,8 @@
 package com.lq.im.service.friendship.service;
 
+import com.lq.im.common.ResponseVO;
+import com.lq.im.service.friendship.model.req.AddFriendshipGroupMemberReq;
+
 /**
  * @ClassName: ImFriendshipGroupMemberService
  * @Author: LiQi
@@ -25,4 +28,11 @@ public interface ImFriendshipGroupMemberService {
      */
     Integer clearGroupMember(Long groupId);
 
+    /**
+     * 添加多个用户到指定分组中
+     * @author LiQi
+     * @param req 请求(包括多个用户id)
+     * @return ResponseVO
+     */
+    ResponseVO addMultipleMembers(AddFriendshipGroupMemberReq req);
 }
