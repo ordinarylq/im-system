@@ -133,7 +133,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
 
             ImFriendshipGroupDAO imFriendshipGroupDAO = this.imFriendshipGroupMapper.selectOne(queryWrapper);
             if(imFriendshipGroupDAO == null) {
-                resp.getFailGroupNameList().add(new DeleteFriendshipGroupResp.ResultItem(
+                resp.getFailGroupItemList().add(new DeleteFriendshipGroupResp.ResultItem(
                         groupName, FriendShipErrorCodeEnum.FRIEND_SHIP_GROUP_IS_NOT_EXIST.getError()));
                 continue;
             }
@@ -145,7 +145,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
             updateGroupDAO.setDelFlag(DelFlagEnum.DELETED.getCode());
             int deleteResult = this.imFriendshipGroupMapper.updateById(updateGroupDAO);
             if(deleteResult != 1) {
-                resp.getFailGroupNameList().add(new DeleteFriendshipGroupResp.ResultItem(
+                resp.getFailGroupItemList().add(new DeleteFriendshipGroupResp.ResultItem(
                         groupName, FriendShipErrorCodeEnum.FRIEND_SHIP_GROUP_DELETE_ERROR.getError()));
             }
             resp.getSuccessGroupNameList().add(groupName);

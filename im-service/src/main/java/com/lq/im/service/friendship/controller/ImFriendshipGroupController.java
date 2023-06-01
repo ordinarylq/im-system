@@ -48,4 +48,12 @@ public class ImFriendshipGroupController {
         return this.imFriendshipGroupMemberService.addMultipleMembers(req);
     }
 
+    @DeleteMapping("/member")
+    public ResponseVO removeGroupMember(@RequestBody @Valid RemoveFriendshipGroupMemberReq req,
+                                        @RequestParam("app-id") Integer appId) {
+
+        req.setAppId(appId);
+        return this.imFriendshipGroupMemberService.removeMultipleMembers(req);
+    }
+
 }

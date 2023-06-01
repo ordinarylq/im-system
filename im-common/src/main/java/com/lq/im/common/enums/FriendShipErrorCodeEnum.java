@@ -43,6 +43,8 @@ public enum FriendShipErrorCodeEnum implements ApplicationExceptionEnum {
 
     FRIEND_SHIP_GROUP_MEMBER_EXIST(30017, "好友已在分组"),
 
+    FRIEND_SHIP_GROUP_MEMBER_NOT_EXIST(30018, "好友不在分组"),
+
     REQUEST_DATA_IS_NOT_EXIST(30017, "请求数据不存在"),
 
     UPDATE_FRIENDSHIP_FAIL(30018, "更新好友关系失败"),

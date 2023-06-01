@@ -8,34 +8,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @ClassName: DeleteFriendshipGroupResp
+ * @ClassName: RemoveFriendshipGroupMemberResp
  * @Author: LiQi
- * @Date: 2023-06-01 8:36
+ * @Date: 2023-06-01 9:21
  * @Version: V1.0
  * @Description:
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeleteFriendshipGroupResp {
+public class RemoveFriendshipGroupMemberResp {
     /**
-     * 成功被删除的分组id列表
+     * 成功被删除的用户id列表
      */
-    private List<String> successGroupNameList = new ArrayList<>();
+    private List<String> successUserIdList = new ArrayList<>();
 
     /**
-     * 删除失败的分组id列表
+     * 删除失败的用户id列表
      */
-    private List<ResultItem> failGroupItemList = new ArrayList<>();
+    private List<ResultItem> failUserItemList = new ArrayList<>();
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ResultItem {
         /**
-         * 分组id
+         * 用户id
          */
-        private String groupName;
+        private String userId;
 
         /**
          * 失败的原因
@@ -43,4 +43,5 @@ public class DeleteFriendshipGroupResp {
         private String message;
 
     }
+
 }
