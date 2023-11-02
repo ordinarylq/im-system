@@ -1,13 +1,6 @@
 spring:
   profiles:
     active: dev
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.42.102:3306/im-core?serverTimezone=GMT%2B8&useSSL=false&characterEncoding=UTF8
-    username: root
-    password: 123456
-
-
 
 # logger 配置
 logging:
@@ -16,9 +9,7 @@ logging:
 server:
   port: 8000
 
-
 mybatis-plus:
-
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   mapper-locations: classpath:mapper/*.xml

@@ -23,13 +23,11 @@ public class ImGroupDAO {
     /**
      * 应用id
      */
-    @TableId
     private Integer appId;
 
     /**
      * 群组id
      */
-    @TableId
     private String groupId;
 
     /**

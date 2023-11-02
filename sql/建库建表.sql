@@ -1,4 +1,4 @@
-create table im-core;
+create database im-core;
 
 -- `im-core`.im_friendship definition
 

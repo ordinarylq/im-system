@@ -44,7 +44,7 @@
     <logger name="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" level="WARN"/>
 
 
-    <springProfile name="test,dev">
+    <springProfile name="test,dev,dev1,dev2">
         <!--文件-->
         <appender name="fileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
             <Prudent>true</Prudent>
