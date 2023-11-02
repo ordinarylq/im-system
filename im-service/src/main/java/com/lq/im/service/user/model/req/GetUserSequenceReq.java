@@ -7,13 +7,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 
-/**
- * @ClassName: GetUserSequenceReq
- * @Author: LiQi
- * @Date: 2023-04-13 13:17
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

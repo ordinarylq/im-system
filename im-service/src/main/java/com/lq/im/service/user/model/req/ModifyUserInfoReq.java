@@ -7,13 +7,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 
-/**
- * @ClassName: ModifyUserInfoReq
- * @Author: LiQi
- * @Date: 2023-04-12 13:34
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,7 +30,7 @@ public class ModifyUserInfoReq extends RequestBase {
     private String photo;
 
     // 性别 1-男 2-女 0-未设置/其他
-    private String userSex;
+    private Integer userSex;
 
     // 个性签名
     private String selfSignature;

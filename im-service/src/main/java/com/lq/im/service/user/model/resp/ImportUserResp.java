@@ -7,13 +7,6 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @ClassName: ImportUserResp
- * @Author: LiQi
- * @Date: 2023-04-11 14:22
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

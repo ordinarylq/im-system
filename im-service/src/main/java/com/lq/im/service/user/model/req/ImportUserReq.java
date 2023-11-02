@@ -6,19 +6,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
-/**
- * @ClassName: ImportUserReq
- * @Author: LiQi
- * @Date: 2023-04-11 14:15
- * @Version: V1.0
- * @Description:
- */
+import static com.lq.im.common.exception.ApplicationExceptionEnum.REQUEST_DATA_DOES_NOT_EXIST_MESSAGE;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class ImportUserReq extends RequestBase {
 
+    @NotEmpty(message = REQUEST_DATA_DOES_NOT_EXIST_MESSAGE)
     private List<ImUserDAO> userList;
 }

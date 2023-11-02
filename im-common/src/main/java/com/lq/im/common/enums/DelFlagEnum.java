@@ -1,11 +1,5 @@
 package com.lq.im.common.enums;
 
-/**
- * @ClassName: DelFlagEnum
- * @Author: LiQi
- * @Date: 2023-04-11 15:48
- * @Version: V1.0
- */
 public enum DelFlagEnum {
     NORMAL(0),
     DELETED(1);

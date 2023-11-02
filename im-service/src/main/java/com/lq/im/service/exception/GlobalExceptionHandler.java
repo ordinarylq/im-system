@@ -117,7 +117,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseVO unknownExceptionHandler(Exception e) {
         e.printStackTrace();
-        ResponseVO responseVO = ResponseVO.errorResponse(BaseErrorCodeEnum.SYSTEM_ERROR);
+        ResponseVO responseVO = ResponseVO.errorResponse(BaseErrorCodeEnum.INTERNAL_ERROR);
         responseVO.setMsg(responseVO.getMsg() + ": " + e.getMessage());
         // todo 出现异常时的通知处理逻辑，发邮件、短信等
         return responseVO;

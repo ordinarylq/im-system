@@ -6,13 +6,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 
-/**
- * @ClassName: LoginReq
- * @Author: LiQi
- * @Date: 2023-04-13 13:10
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

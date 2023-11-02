@@ -8,18 +8,13 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
-/**
- * @ClassName: DeleteUserReq
- * @Author: LiQi
- * @Date: 2023-04-11 16:17
- * @Version: V1.0
- * @Description:
- */
+import static com.lq.im.common.exception.ApplicationExceptionEnum.REQUEST_DATA_DOES_NOT_EXIST_MESSAGE;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class DeleteUserReq extends RequestBase {
 
-    @NotEmpty(message = "用户id列表不能为空")
+    @NotEmpty(message = REQUEST_DATA_DOES_NOT_EXIST_MESSAGE)
     private List<String> userIdList;
 }

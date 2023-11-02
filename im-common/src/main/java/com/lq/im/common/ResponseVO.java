@@ -1,17 +1,11 @@
 package com.lq.im.common;
 
 import com.lq.im.common.exception.ApplicationExceptionEnum;
+import static com.lq.im.common.exception.ApplicationExceptionEnum.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * @ClassName: ResponseVO
- * @Author: LiQi
- * @Date: 2023-04-11 11:27
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,46 +18,44 @@ public class ResponseVO<T> {
     private T data;
 
     public static <U> ResponseVO<U> successResponse(U data) {
-        return new ResponseVO<> (200, "success", data);
+        return new ResponseVO<>(SUCCESS_CODE, SUCCESS_MESSAGE, data);
     }
 
-    public static ResponseVO successResponse() {
-        return new ResponseVO(200, "success");
+    public static <U> ResponseVO<U> successResponse() {
+        return new ResponseVO<>(SUCCESS_CODE, SUCCESS_MESSAGE);
     }
 
-    public static ResponseVO errorResponse() {
-        return new ResponseVO(500, "系统内部异常");
+    public static <U> ResponseVO<U> errorResponse() {
+        return new ResponseVO<>(INTERNAL_ERROR_CODE, INTERNAL_ERROR_MESSAGE);
     }
 
-    public static ResponseVO errorResponse(int code, String msg) {
-        return new ResponseVO(code, msg);
+    public static <U> ResponseVO<U> errorResponse(int code, String msg) {
+        return new ResponseVO<>(code, msg);
     }
 
-    public static ResponseVO errorResponse(ApplicationExceptionEnum enums) {
-        return new ResponseVO(enums.getCode(), enums.getError());
+    public static <U> ResponseVO<U> errorResponse(ApplicationExceptionEnum enums) {
+        return new ResponseVO<>(enums.getCode(), enums.getError());
     }
 
     public boolean isOk(){
-        return this.code == 200;
+        return this.code != SUCCESS_CODE;
     }
-
 
     public ResponseVO(int code, String msg) {
         this.code = code;
         this.msg = msg;
     }
 
-    public ResponseVO success(){
-        this.code = 200;
-        this.msg = "success";
+    public ResponseVO<?> success(){
+        this.code = SUCCESS_CODE;
+        this.msg = SUCCESS_MESSAGE;
         return this;
     }
 
     public ResponseVO<T> success(T data){
-        this.code = 200;
-        this.msg = "success";
+        this.code = SUCCESS_CODE;
+        this.msg = SUCCESS_MESSAGE;
         this.data = data;
         return this;
     }
-
 }

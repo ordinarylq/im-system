@@ -5,18 +5,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
-/**
- * @ClassName: GetUserInfoReq
- * @Author: LiQi
- * @Date: 2023-04-11 15:40
- * @Version: V1.0
- * @Description:
- */
+import static com.lq.im.common.exception.ApplicationExceptionEnum.REQUEST_DATA_DOES_NOT_EXIST_MESSAGE;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetUserInfoReq extends RequestBase {
+
+    @NotEmpty(message = REQUEST_DATA_DOES_NOT_EXIST_MESSAGE)
     private List<String> userIdList;
 }
