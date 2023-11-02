@@ -3,33 +3,29 @@ package com.lq.im.service.friendship.service;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.service.friendship.model.req.*;
 
-/**
- * @ClassName: ImFriendshipService
- * @Author: LiQi
- * @Date: 2023-04-13 15:19
- * @Version: V1.0
- */
 public interface ImFriendshipService {
     /**
      * 批量导入好友关系
-     * @author LiQi
      * @param req 请求(包含好友列表)
-     * @return ResponseVO
+     * @return ResponseVO 导入结果
      */
-    ResponseVO importFriendship(ImportFriendshipReq req);
+    ResponseVO<?> importFriendship(ImportFriendshipReq req);
 
     /**
      * 添加好友关系
-     * @author LiQi
      * @param req 请求(包含用户id, 好友id)
-     * @return ResponseVO
+     * @return ResponseVO 添加结果
      */
-    ResponseVO addFriendship(AddFriendshipReq req);
+    ResponseVO<?> addFriendship(AddFriendshipReq req);
 
     /**
      * 添加好友
+     * @param userId 用户id
+     * @param friendInfo 好友信息
+     * @param appId 应用id
+     * @return 添加结果
      */
-    ResponseVO doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId);
+    ResponseVO<?> doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId);
 
     /**
      * 更新好友关系

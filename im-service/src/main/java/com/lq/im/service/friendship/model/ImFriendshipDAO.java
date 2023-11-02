@@ -6,13 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * @ClassName: ImFriendshipDAO
- * @Author: LiQi
- * @Date: 2023-04-13 15:49
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -75,6 +68,4 @@ public class ImFriendshipDAO {
      * 拓展
      */
     private String extra;
-
-
 }

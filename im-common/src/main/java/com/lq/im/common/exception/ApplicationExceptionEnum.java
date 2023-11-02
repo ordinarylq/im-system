@@ -3,10 +3,10 @@ package com.lq.im.common.exception;
 public interface ApplicationExceptionEnum {
 
     int SUCCESS_CODE = 200;
-    String SUCCESS_MESSAGE = "success";
+    String SUCCESS_MESSAGE = "成功";
 
     int INTERNAL_ERROR_CODE = 500;
-    String INTERNAL_ERROR_MESSAGE = "Internal Error, please contact Administrator.";
+    String INTERNAL_ERROR_MESSAGE = "服务内部错误";
 
     int TOO_MUCH_DATA_CODE = 20000;
     String TOO_MUCH_DATA_MESSAGE = "导入数量超出上限";
@@ -23,11 +23,71 @@ public interface ApplicationExceptionEnum {
     int REQUEST_DATA_DOES_NOT_EXIST_CODE = 20004;
     String REQUEST_DATA_DOES_NOT_EXIST_MESSAGE = "请求数据不存在";
 
+    int ADD_FRIEND_ERROR_CODE = 30001;
+    String ADD_FRIEND_ERROR_MESSAGE = "添加好友失败";
+
+    int OTHER_PERSON_IS_YOUR_FRIEND_CODE = 30002;
+    String OTHER_PERSON_IS_YOUR_FRIEND_MESSAGE = "对方已经是你的好友";
+
+    int OTHER_PERSON_IS_NOT_YOUR_FRIEND_CODE = 30003;
+    String OTHER_PERSON_IS_NOT_YOUR_FRIEND_MESSAGE = "对方不是你的好友";
+
+    int FRIEND_IS_DELETED_CODE = 30004;
+    String FRIEND_IS_DELETED_MESSAGE = "好友已被删除";
+
+    int FRIEND_IS_BLOCKED_CODE = 30006;
+    String FRIEND_IS_BLOCKED_MESSAGE = "好友已被拉黑";
+
+    int YOU_ARE_BLOCKED_CODE = 30007;
+    String YOU_ARE_BLOCKED_MESSAGE = "你已被好友拉黑";
+
+    int FRIENDSHIP_IS_NOT_EXIST_CODE = 30008;
+    String FRIENDSHIP_IS_NOT_EXIST_MESSAGE = "好友关系不存在";
+
+    int BLOCK_FRIEND_ERROR_CODE = 30009;
+    String BLOCK_FRIEND_ERROR_MESSAGE = "添加黑名单失败";
+
+    int FRIEND_IS_NOT_BLOCKED_CODE = 30010;
+    String FRIEND_IS_NOT_BLOCKED_MESSAGE = "好友未被拉黑";
+
+    int APPROVE_OTHERS_FRIENDSHIP_REQUEST_ERROR_CODE = 30011;
+    String APPROVE_OTHERS_FRIENDSHIP_REQUEST_ERROR_MESSAGE = "无法审批其他人的好友请求";
+
+    int FRIENDSHIP_REQUEST_IS_NOT_EXIST_CODE = 30012;
+    String FRIENDSHIP_REQUEST_IS_NOT_EXIST_MESSAGE = "好友申请不存在";
+
+    int CREATE_FRIEND_GROUP_ERROR_CODE = 30013;
+    String CREATE_FRIEND_GROUP_ERROR_MESSAGE = "好友分组创建失败";
+
+    int DELETE_FRIEND_GROUP_ERROR_CODE = 30014;
+    String DELETE_FRIEND_GROUP_ERROR_MESSAGE = "好友分组删除失败";
+
+    int FRIEND_GROUP_ALREADY_EXISTS_CODE = 30015;
+    String FRIEND_GROUP_ALREADY_EXISTS_MESSAGE = "好友分组已存在";
+
+    int FRIEND_GROUP_NOT_EXISTS_CODE = 30016;
+    String FRIEND_GROUP_NOT_EXISTS_MESSAGE = "好友分组不存在";
+
+    int FRIEND_IS_IN_GROUP_CODE = 30017;
+    String FRIEND_IS_IN_GROUP_MESSAGE = "好友已在分组";
+
+    int FRIEND_IS_NOT_IN_GROUP_CODE = 30018;
+    String FRIEND_IS_NOT_IN_GROUP_MESSAGE = "好友不在分组";
+
+    int UPDATE_FRIENDSHIP_ERROR_CODE = 30019;
+    String UPDATE_FRIENDSHIP_ERROR_MESSAGE = "更新好友关系失败";
+
+    int DELETE_FRIENDSHIP_ERROR_CODE = 30020;
+    String DELETE_FRIENDSHIP_ERROR_MESSAGE = "删除好友关系失败";
+
+    int DELETE_BLOCK_LIST_ERROR_CODE = 30020;
+    String DELETE_BLOCK_LIST_ERROR_MESSAGE = "删除黑名单失败";
+
     int SERVER_NOT_AVAILABLE_CODE = 71000;
     String SERVER_NOT_AVAILABLE_MESSAGE = "没有可用的服务";
 
     int PARAMETER_VALIDATION_ERROR_CODE = 90001;
-    String PARAMETER_VALIDATION_ERROR_MESSAGE = "Parameter validation error";
+    String PARAMETER_VALIDATION_ERROR_MESSAGE = "请求参数解析失败";
 
     int getCode();
 

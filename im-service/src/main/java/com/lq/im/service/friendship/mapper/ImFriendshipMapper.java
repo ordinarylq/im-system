@@ -8,12 +8,6 @@ import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
-/**
- * @ClassName: ImFriendshipMapper
- * @Author: LiQi
- * @Date: 2023-04-13 15:58
- * @Version: V1.0
- */
 @Mapper
 public interface ImFriendshipMapper extends BaseMapper<ImFriendshipDAO> {
 

@@ -9,13 +9,6 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
-/**
- * @ClassName: ImFriendshipController
- * @Author: LiQi
- * @Date: 2023-04-14 8:33
- * @Version: V1.0
- * @Description:
- */
 @RestController
 @RequestMapping("/api/v1/friendship")
 public class ImFriendshipController {
@@ -24,20 +17,21 @@ public class ImFriendshipController {
     private ImFriendshipService imFriendshipService;
 
     @PostMapping("/import")
-    public ResponseVO importFriendship(@RequestBody @Valid ImportFriendshipReq req, @RequestParam("app-id") Integer appId) {
+    public ResponseVO<?> importFriendship(@RequestBody @Valid ImportFriendshipReq req,
+                                       @RequestParam("app-id") Integer appId) {
         req.setAppId(appId);
         return this.imFriendshipService.importFriendship(req);
     }
 
     @PostMapping("/add")
-    public ResponseVO addFriendship(@RequestBody @Valid AddFriendshipReq req,
+    public ResponseVO<?> addFriendship(@RequestBody @Valid AddFriendshipReq req,
                                     @RequestParam("app-id") Integer appId) {
         req.setAppId(appId);
         return this.imFriendshipService.addFriendship(req);
     }
 
     @PostMapping("/update")
-    public ResponseVO updateFriendship(@RequestBody @Valid UpdateFriendshipReq req,
+    public ResponseVO<?> updateFriendship(@RequestBody @Valid UpdateFriendshipReq req,
                                        @RequestParam("app-id") Integer appId) {
         req.setAppId(appId);
         return this.imFriendshipService.updateFriendship(req);

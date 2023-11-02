@@ -32,5 +32,4 @@ public class FriendInfo {
     private String extra;
 
     private String addWording;
-
 }

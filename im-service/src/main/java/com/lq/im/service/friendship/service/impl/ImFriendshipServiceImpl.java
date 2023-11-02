@@ -17,6 +17,7 @@ import com.lq.im.service.friendship.service.ImFriendshipRequestService;
 import com.lq.im.service.friendship.service.ImFriendshipService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,8 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.lq.im.service.user.service.impl.ImUserServiceImpl.ERROR_MESSAGE;
 
 /**
  * @ClassName: ImFriendshipServiceImpl
@@ -35,6 +38,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("DuplicatedCode")
 @Service
+@Slf4j
 public class ImFriendshipServiceImpl implements ImFriendshipService {
 
     @Resource
@@ -46,51 +50,51 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
     @Resource
     private ImFriendshipRequestService imFriendshipRequestService;
 
-
     @Override
-    public ResponseVO importFriendship(ImportFriendshipReq req) {
+    public ResponseVO<?> importFriendship(ImportFriendshipReq req) {
         if (req.getFriendInfoList() == null) {
-            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.REQUEST_DATA_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.REQUEST_DATA_DOES_NOT_EXIST);
         }
         if (req.getFriendInfoList().size() > 100) {
-            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.IMPORT_SIZE_BEYOND);
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.TOO_MUCH_DATA);
         }
         ImportFriendshipResp resp = new ImportFriendshipResp();
         for (FriendInfo friendInfo : req.getFriendInfoList()) {
-            ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
-            BeanUtils.copyProperties(friendInfo, imFriendshipDAO);
-            imFriendshipDAO.setAppId(req.getAppId());
-            imFriendshipDAO.setUserId(req.getUserId());
-
             try {
-                int insertResult = this.imFriendshipMapper.insert(imFriendshipDAO);
-                if (insertResult == 1) {
-                    resp.getSuccessFriendIdList().add(friendInfo.getFriendUserId());
-                } else {
-                    resp.getFailFriendIdList().add(friendInfo.getFriendUserId());
-                }
+                processFriendship(req.getAppId(), req.getUserId(), friendInfo, resp);
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error(ERROR_MESSAGE, e);
                 resp.getFailFriendIdList().add(friendInfo.getFriendUserId());
             }
         }
         return ResponseVO.successResponse(resp);
     }
+    private void processFriendship(Integer appId, String userId, FriendInfo friendInfo, ImportFriendshipResp resp) {
+        ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
+        imFriendshipDAO.setAppId(appId);
+        imFriendshipDAO.setUserId(userId);
+        BeanUtils.copyProperties(friendInfo, imFriendshipDAO);
+        int insertResult = this.imFriendshipMapper.insert(imFriendshipDAO);
+        if (insertResult == 1) {
+            resp.getSuccessFriendIdList().add(friendInfo.getFriendUserId());
+        } else {
+            resp.getFailFriendIdList().add(friendInfo.getFriendUserId());
+        }
+    }
 
     @Override
-    public ResponseVO addFriendship(AddFriendshipReq req) {
-        // 先判断这两个用户是否存在
+    public ResponseVO<?> addFriendship(AddFriendshipReq req) {
+        // 1. 判断这两个用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
         if (!singleUserInfo.isOk()) {
             return singleUserInfo;
         }
-
         ResponseVO<ImUserDAO> friendUserInfo = imUserService.getSingleUserInfo(
                 req.getFriendInfo().getFriendUserId(), req.getAppId());
         if (!friendUserInfo.isOk()) {
             return friendUserInfo;
         }
-        // 再添加
+        // 2. 添加
         if(Objects.equals(friendUserInfo.getData().getFriendAllowType(), AddFriendshipEnum.NO_NEED_TO_CONFIRM.getCode())) {
             // 不需要确认
             return doInternalAddFriend(req.getUserId(), req.getFriendInfo(), req.getAppId());
@@ -107,13 +111,25 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                 return this.imFriendshipRequestService.addFriendRequest(req.getAppId(), req.getUserId(), req.getFriendInfo());
             } else {
                 // 如果是则抛异常
-                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.TO_IS_YOUR_FRIEND);
+                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.OTHER_PERSON_IS_YOUR_FRIEND);
             }
         }
     }
+    private ResponseVO<ImUserDAO> checkIfUserExists(Integer appId, String userId, String friendUserId) {
+        ResponseVO<ImUserDAO> userInfo = imUserService.getSingleUserInfo(userId, appId);
+        if (!userInfo.isOk()) {
+            return userInfo;
+        }
+        ResponseVO<ImUserDAO> friendUserInfo = imUserService.getSingleUserInfo(
+                friendUserId, appId);
+        if (!friendUserInfo.isOk()) {
+            return friendUserInfo;
+        }
+        return null;
+    }
 
     @Transactional
-    public ResponseVO doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId) {
+    public ResponseVO<?> doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId) {
         // a添加b
         // 先查a是否已添加b
         QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
@@ -130,7 +146,6 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             imFriendshipDAO.setCreateTime(System.currentTimeMillis());
             imFriendshipDAO.setStatus(FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
             imFriendshipDAO.setBlack(FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode());
-
             int insertResult = this.imFriendshipMapper.insert(imFriendshipDAO);
             if (insertResult != 1) {
                 return ResponseVO.errorResponse(FriendShipErrorCodeEnum.ADD_FRIEND_ERROR);
@@ -139,9 +154,8 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             // 如果已添加，则查看状态，若非正常，则更新，否则抛异常
             if (imFriendshipDAO.getStatus() == FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode()
             && imFriendshipDAO.getBlack() == FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode()) {
-                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.TO_IS_YOUR_FRIEND);
+                return ResponseVO.errorResponse(FriendShipErrorCodeEnum.OTHER_PERSON_IS_YOUR_FRIEND);
             } else {
-
                 UpdateWrapper<ImFriendshipDAO> updateWrapper = new UpdateWrapper<>();
                 updateWrapper.eq("app_id", appId)
                         .eq("from_id", userId)
@@ -153,7 +167,6 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                 friendshipDAO.setRemark(friendInfo.getRemark());
                 friendshipDAO.setAddSource(friendInfo.getAddSource());
                 friendshipDAO.setExtra(friendInfo.getExtra());
-
                 int updateResult = this.imFriendshipMapper.update(friendshipDAO, updateWrapper);
                 if(updateResult != 1) {
                     return ResponseVO.errorResponse(FriendShipErrorCodeEnum.ADD_FRIEND_ERROR);
@@ -169,8 +182,10 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                 .eq("to_id", userId);
         ImFriendshipDAO imFriendshipDAO1 = this.imFriendshipMapper.selectOne(queryWrapper);
         if(imFriendshipDAO1 == null) {
-            imFriendshipDAO1 = new ImFriendshipDAO(appId, friendInfo.getFriendUserId(), userId, null, FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode(),
-                    FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode(), null, System.currentTimeMillis(), null, null, null);
+            imFriendshipDAO1 = new ImFriendshipDAO(appId, friendInfo.getFriendUserId(), userId, null,
+                    FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode(),
+                    FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode(), null,
+                    System.currentTimeMillis(), null, null, null);
             int insertResult = this.imFriendshipMapper.insert(imFriendshipDAO1);
             if (insertResult != 1) {
                 return ResponseVO.errorResponse(FriendShipErrorCodeEnum.ADD_FRIEND_ERROR);
@@ -188,7 +203,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
     }
 
     @Override
-    public ResponseVO updateFriendship(UpdateFriendshipReq req) {
+    public ResponseVO<?> updateFriendship(UpdateFriendshipReq req) {
         // todo 抽离公共部分
         // 先判断这两个用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
@@ -206,7 +221,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
     }
 
     @Transactional
-    ResponseVO doInternalUpdateFriendship(String userId, FriendInfo friendInfo, Integer appId) {
+    ResponseVO<?> doInternalUpdateFriendship(String userId, FriendInfo friendInfo, Integer appId) {
 
         UpdateWrapper<ImFriendshipDAO> updateWrapper = new UpdateWrapper<>();
         updateWrapper.set(!StringUtils.isEmpty(friendInfo.getRemark()), "remark", friendInfo.getRemark())
@@ -217,7 +232,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                 .eq("to_id", friendInfo.getFriendUserId());
         int updateResult = this.imFriendshipMapper.update(null, updateWrapper);
         if(updateResult != 1) {
-            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.UPDATE_FRIENDSHIP_FAIL);
+            return ResponseVO.errorResponse(FriendShipErrorCodeEnum.UPDATE_FRIENDSHIP_ERROR);
         }
         return ResponseVO.successResponse();
     }

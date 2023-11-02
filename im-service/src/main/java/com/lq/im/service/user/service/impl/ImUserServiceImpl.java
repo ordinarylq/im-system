@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ImUserServiceImpl implements ImUserService {
-    private static final String ERROR_MESSAGE = "An error occurred";
+    public static final String ERROR_MESSAGE = "An error occurred";
 
     @Resource
     private ImUserMapper imUserMapper;
