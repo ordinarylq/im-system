@@ -41,12 +41,12 @@ public class ImFriendshipDAO {
     /**
      * 用户是否拉黑好友 1-正常 0-已拉黑
      */
-    private Integer black;
+    private Integer block;
 
     /**
      * 黑名单关系序列号
      */
-    private Long blackSequence;
+    private Long blockSequence;
 
     /**
      * 好友关系创建时间

@@ -149,7 +149,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             BeanUtils.copyProperties(friendInfo, imFriendshipDAO);
             imFriendshipDAO.setCreateTime(System.currentTimeMillis());
             imFriendshipDAO.setStatus(FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
-            imFriendshipDAO.setBlack(FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode());
+            imFriendshipDAO.setBlock(FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode());
             int insertResult = this.imFriendshipMapper.insert(imFriendshipDAO);
             if (insertResult != 1) {
                 return ResponseVO.errorResponse(FriendShipErrorCodeEnum.ADD_FRIEND_ERROR);
@@ -157,7 +157,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         } else {
             // 如果已添加，则查看状态，若非正常，则更新，否则抛异常
             if (imFriendshipDAO.getStatus() == FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode()
-                    && imFriendshipDAO.getBlack() == FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode()) {
+                    && imFriendshipDAO.getBlock() == FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode()) {
                 return ResponseVO.errorResponse(FriendShipErrorCodeEnum.OTHER_PERSON_IS_YOUR_FRIEND);
             } else {
                 UpdateWrapper<ImFriendshipDAO> updateWrapper = new UpdateWrapper<>();
@@ -166,7 +166,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                         .eq("to_id", friendInfo.getFriendUserId());
                 ImFriendshipDAO friendshipDAO = new ImFriendshipDAO();
                 friendshipDAO.setStatus(FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
-                friendshipDAO.setBlack(FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode());
+                friendshipDAO.setBlock(FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode());
                 friendshipDAO.setRemark(friendInfo.getRemark());
                 friendshipDAO.setAddSource(friendInfo.getAddSource());
                 friendshipDAO.setExtra(friendInfo.getExtra());
@@ -328,13 +328,13 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             if(selectResult == null) {
                 resultItem.setCodeAndMessage(FriendShipErrorCodeEnum.FRIENDSHIP_IS_NOT_EXIST);
                 resp.getFailList().add(friendUserId);
-            } else if (selectResult.getBlack() == FriendshipStatusEnum.BLOCK_STATUS_BLOCKED.getCode()) {
+            } else if (selectResult.getBlock() == FriendshipStatusEnum.BLOCK_STATUS_BLOCKED.getCode()) {
                 resultItem.setCodeAndMessage(FriendShipErrorCodeEnum.FRIEND_IS_BLOCKED);
                 resp.getFailList().add(friendUserId);
             } else {
                 // 更新拉黑状态
                 ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
-                imFriendshipDAO.setBlack(FriendshipStatusEnum.BLOCK_STATUS_BLOCKED.getCode());
+                imFriendshipDAO.setBlock(FriendshipStatusEnum.BLOCK_STATUS_BLOCKED.getCode());
                 try {
                     int updateResult = this.imFriendshipMapper.update(imFriendshipDAO, queryWrapper);
                     if(updateResult == 1) {
@@ -380,12 +380,12 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             return ResponseVO.successResponse();
         }
         // 3. 再判断block字段
-        if(imFriendshipDAO.getBlack() == FriendshipStatusEnum.BLOCK_STATUS_BLOCKED.getCode()) {
+        if(imFriendshipDAO.getBlock() == FriendshipStatusEnum.BLOCK_STATUS_BLOCKED.getCode()) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_IS_BLOCKED);
         }
         // 更新block字段
         ImFriendshipDAO imFriendshipDAO1 = new ImFriendshipDAO();
-        imFriendshipDAO1.setBlack(FriendshipStatusEnum.BLOCK_STATUS_BLOCKED.getCode());
+        imFriendshipDAO1.setBlock(FriendshipStatusEnum.BLOCK_STATUS_BLOCKED.getCode());
         try {
             int updateResult = this.imFriendshipMapper.update(imFriendshipDAO1, queryWrapper);
             if(updateResult != 1) {
@@ -411,11 +411,11 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                 .eq("from_id", req.getUserId())
                 .eq("to_id", req.getFriendUserId());
         ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
-        if(imFriendshipDAO == null || imFriendshipDAO.getBlack() == FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode()) {
+        if(imFriendshipDAO == null || imFriendshipDAO.getBlock() == FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode()) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_IS_NOT_BLOCKED);
         }
         ImFriendshipDAO imFriendshipDAO1 = new ImFriendshipDAO();
-        imFriendshipDAO1.setBlack(FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode());
+        imFriendshipDAO1.setBlock(FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode());
         int updateResult = this.imFriendshipMapper.update(imFriendshipDAO1, queryWrapper);
         if(updateResult != 1) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.DELETE_BLOCK_LIST_FAIL);
