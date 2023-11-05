@@ -5,13 +5,6 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 
-/**
- * @ClassName: GetFriendshipReq
- * @Author: LiQi
- * @Date: 2023-04-14 15:12
- * @Version: V1.0
- * @Description:
- */
 @Data
 public class GetFriendshipReq extends RequestBase {
 

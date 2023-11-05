@@ -8,13 +8,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
-/**
- * @ClassName: CheckFriendshipReq
- * @Author: LiQi
- * @Date: 2023-04-18 10:03
- * @Version: V1.0
- * @Description:
- */
 @Data
 public class CheckFriendshipReq extends RequestBase {
 

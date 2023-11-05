@@ -4,13 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * @ClassName: CheckFriendshipResp
- * @Author: LiQi
- * @Date: 2023-04-18 10:07
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

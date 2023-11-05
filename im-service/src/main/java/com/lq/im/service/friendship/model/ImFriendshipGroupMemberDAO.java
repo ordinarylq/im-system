@@ -5,14 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 好友分组成员
- * @ClassName: ImFriendshipGroupMemberDAO
- * @Author: LiQi
- * @Date: 2023-05-31 15:45
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

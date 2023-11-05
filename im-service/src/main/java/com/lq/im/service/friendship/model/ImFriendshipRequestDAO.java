@@ -8,13 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * @ClassName: ImFriendshipRequestDAO
- * @Author: LiQi
- * @Date: 2023-04-27 16:42
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

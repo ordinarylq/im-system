@@ -38,7 +38,7 @@ public class ResponseVO<T> {
     }
 
     public boolean isOk(){
-        return this.code != SUCCESS_CODE;
+        return this.code == SUCCESS_CODE;
     }
 
     public ResponseVO(int code, String msg) {

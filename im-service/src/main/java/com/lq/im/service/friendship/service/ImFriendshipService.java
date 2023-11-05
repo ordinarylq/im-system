@@ -29,83 +29,72 @@ public interface ImFriendshipService {
 
     /**
      * 更新好友关系
-     * @author LiQi
      * @param req 请求(包含用户id, 好友关系信息)
      * @return ResponseVO
      */
-    ResponseVO updateFriendship(UpdateFriendshipReq req);
+    ResponseVO<?> updateFriendship(UpdateFriendshipReq req);
 
     /**
      * 删除好友关系
-     * @author LiQi
      * @param req 请求(包含用户id, 好友id)
      * @return ResponseVO
      */
-    ResponseVO deleteFriendship(DeleteFriendshipReq req);
+    ResponseVO<?> deleteFriendship(DeleteFriendshipReq req);
 
     /**
      * 删除某用户的所有好友
-     * @author LiQi
      * @param userId 用户id
 	 * @param appId 应用id
      * @return ResponseVO
      */
-    ResponseVO deleteAllFriendship(String userId, Integer appId);
+    ResponseVO<?> deleteAllFriendship(String userId, Integer appId);
 
     /**
      * 获取所有的好友关系
-     * @author LiQi
      * @param req 请求(包含用户id)
      * @return ResponseVO
      */
-    ResponseVO getAllFriendship(GetAllFriendshipReq req);
+    ResponseVO<?> getAllFriendship(GetAllFriendshipReq req);
 
     /**
      * 获取指定的好友关系
-     * @author LiQi
      * @param req 请求(包含用户id, 好友id)
      * @return ResponseVO
      */
-    ResponseVO getFriendship(GetFriendshipReq req);
+    ResponseVO<?> getFriendship(GetFriendshipReq req);
 
     /**
      * 批量校验好友关系
-     * @author LiQi
      * @param req 请求(包含用户id, 待校验好友id列表)
      * @return ResponseVO
      */
-    ResponseVO checkFriendship(CheckFriendshipReq req);
+    ResponseVO<?> checkFriendship(CheckFriendshipReq req);
 
     /**
      * 批量导入黑名单
-     * @author LiQi
      * @param req 请求(包含用户id, 待拉黑用户id列表)
      * @return ResponseVO
      */
-    ResponseVO importBlacklist(ImportBlacklistReq req);
+    ResponseVO<?> importBlocklist(ImportBlocklistReq req);
 
     /**
      * 添加黑名单
-     * @author LiQi
      * @param req 请求(包含用户id, 待拉黑用户id)
      * @return ResponseVO
      */
-    ResponseVO addBlacklist(AddFriendShipBlackReq req);
-
+    ResponseVO<?> blockFriend(BlockFriendReq req);
 
     /**
      * 删除黑名单
-     * @author LiQi
      * @param req 请求(包含用户id, 待拉黑用户id)
      * @return ResponseVO
      */
-    ResponseVO deleteBlacklist(DeleteBlackReq req);
+    ResponseVO<?> unblockFriend(UnblockFriendReq req);
 
     /**
      * 校验黑名单
-     * @author LiQi
-     * @param req
+     * @param req 请求
      * @return ResponseVO
      */
-    ResponseVO checkBlacklist(CheckFriendshipReq req);
+    ResponseVO<?> checkBlocklist(CheckFriendshipReq req);
 }

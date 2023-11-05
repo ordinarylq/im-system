@@ -7,17 +7,10 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 
-/**
- * @ClassName: DeleteBlackReq
- * @Author: LiQi
- * @Date: 2023-04-18 14:36
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeleteBlackReq extends RequestBase {
+public class UnblockFriendReq extends RequestBase {
 
     @NotBlank(message = "userId不能为空")
     private String userId;

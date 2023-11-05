@@ -15,18 +15,15 @@ import com.lq.im.service.friendship.service.ImFriendshipGroupMemberService;
 import com.lq.im.service.friendship.service.ImFriendshipGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
-/**
- * @ClassName: ImFriendshipGroupMemberServiceImpl
- * @Author: LiQi
- * @Date: 2023-05-31 16:48
- * @Version: V1.0
- * @Description:
- */
+import static com.lq.im.service.user.service.impl.ImUserServiceImpl.ERROR_MESSAGE;
+
 @Service
+@Slf4j
 public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemberService {
 
     @Resource
@@ -44,7 +41,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
             return this.imFriendshipGroupMemberMapper.insert(
                     new ImFriendshipGroupMemberDAO(groupId, userId));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(ERROR_MESSAGE, e);
             return 0;
         }
     }
@@ -62,7 +59,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
     }
 
     @Override
-    public ResponseVO addMultipleMembers(AddFriendshipGroupMemberReq req) {
+    public ResponseVO<?> addMultipleMembers(AddFriendshipGroupMemberReq req) {
         // 1. 首先判断用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
         if(singleUserInfo == null || !singleUserInfo.isOk()) {
@@ -94,7 +91,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
                     resp.getSuccessUserIdList().add(friendUserId);
                 } else {
                     resp.getFailUserItemList().add(new AddFriendshipGroupMemberResp.ResultItem
-                            (friendUserId, FriendShipErrorCodeEnum.FRIEND_SHIP_GROUP_MEMBER_EXIST.getError()));
+                            (friendUserId, FriendShipErrorCodeEnum.FRIEND_GROUP_ALREADY_EXISTS.getError()));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -139,7 +136,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
                     resp.getSuccessUserIdList().add(friendUserId);
                 } else {
                     resp.getFailUserItemList().add(new RemoveFriendshipGroupMemberResp.ResultItem(friendUserId,
-                            FriendShipErrorCodeEnum.FRIEND_SHIP_GROUP_MEMBER_NOT_EXIST.getError()));
+                            FriendShipErrorCodeEnum.FRIEND_IS_NOT_IN_GROUP.getError()));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

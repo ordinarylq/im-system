@@ -7,13 +7,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
-/**
- * @ClassName: RemoveFriendshipGroupReq
- * @Author: LiQi
- * @Date: 2023-05-31 15:54
- * @Version: V1.0
- * @Description:
- */
 @Data
 public class RemoveFriendshipGroupReq extends RequestBase {
 

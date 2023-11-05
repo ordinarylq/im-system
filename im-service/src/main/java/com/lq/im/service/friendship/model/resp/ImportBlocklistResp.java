@@ -8,15 +8,8 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @ClassName: ImportBlacklistResp
- * @Author: LiQi
- * @Date: 2023-04-18 13:09
- * @Version: V1.0
- * @Description:
- */
 @Data
-public class ImportBlacklistResp {
+public class ImportBlocklistResp {
 
     /**
      * 添加黑名单的列表及失败原因

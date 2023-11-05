@@ -5,13 +5,6 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 
-/**
- * @ClassName: DeleteFriendshipReq
- * @Author: LiQi
- * @Date: 2023-04-14 14:41
- * @Version: V1.0
- * @Description:
- */
 @Data
 public class DeleteFriendshipReq extends RequestBase {
 

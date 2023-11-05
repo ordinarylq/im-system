@@ -7,13 +7,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 
-/**
- * @ClassName: FriendInfo
- * @Author: LiQi
- * @Date: 2023-04-14 9:18
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,7 +18,7 @@ public class FriendInfo {
 
     private Integer status = FriendshipStatusEnum.FRIEND_STATUS_NO_FRIEND.getCode();
 
-    private Integer black = FriendshipStatusEnum.BLACK_STATUS_NORMAL.getCode();
+    private Integer black = FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode();
 
     private String addSource;
 

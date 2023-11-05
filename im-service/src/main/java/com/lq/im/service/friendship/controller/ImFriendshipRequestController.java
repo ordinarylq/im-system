@@ -11,13 +11,6 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
-/**
- * @ClassName: ImFriendshipRequestController
- * @Author: LiQi
- * @Date: 2023-04-28 13:44
- * @Version: V1.0
- * @Description:
- */
 @RestController
 @RequestMapping("/api/v1/friendship-request")
 public class ImFriendshipRequestController {
@@ -26,7 +19,7 @@ public class ImFriendshipRequestController {
     private ImFriendshipRequestService imFriendshipRequestService;
 
     @PostMapping("/approve")
-    public ResponseVO approveFriendshipRequest(@RequestBody @Valid ApproveFriendRequestReq req,
+    public ResponseVO<?> approveFriendshipRequest(@RequestBody @Valid ApproveFriendRequestReq req,
                                         @RequestParam("app-id") Integer appId,
                                         @RequestParam("operator") @NotBlank String operator) {
         req.setAppId(appId);
@@ -35,7 +28,7 @@ public class ImFriendshipRequestController {
     }
 
     @PostMapping("/read")
-    public ResponseVO readFriendshipRequest(@RequestBody @Valid ReadFriendshipRequestReq req,
+    public ResponseVO<?> readFriendshipRequest(@RequestBody @Valid ReadFriendshipRequestReq req,
                                             @RequestParam("app-id") Integer appId,
                                             @RequestParam("operator") @NotBlank String operator) {
         req.setAppId(appId);
@@ -44,7 +37,7 @@ public class ImFriendshipRequestController {
     }
 
     @PostMapping("/get")
-    public ResponseVO getAllFriendshipRequest(@RequestBody @Valid GetAllFriendshipRequestReq req,
+    public ResponseVO<?> getAllFriendshipRequest(@RequestBody @Valid GetAllFriendshipRequestReq req,
                                               @RequestParam("app-id") Integer appId,
                                               @RequestParam("operator") @NotBlank String operator) {
         req.setAppId(appId);

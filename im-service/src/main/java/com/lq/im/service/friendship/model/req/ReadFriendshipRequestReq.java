@@ -5,13 +5,6 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 
-/**
- * @ClassName: ReadFriendshipRequestReq
- * @Author: LiQi
- * @Date: 2023-05-31 14:29
- * @Version: V1.0
- * @Description:
- */
 @Data
 public class ReadFriendshipRequestReq extends RequestBase {
 

@@ -7,13 +7,6 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @ClassName: DeleteFriendshipGroupResp
- * @Author: LiQi
- * @Date: 2023-06-01 8:36
- * @Version: V1.0
- * @Description:
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
