@@ -1,11 +1,5 @@
 package com.lq.im.common.enums;
 
-/**
- * @ClassName: GroupMemberRoleEnum
- * @Author: LiQi
- * @Date: 2023-06-01 14:39
- * @Version: V1.0
- */
 public enum GroupMemberRoleEnum {
     /**
      * 普通成员
@@ -35,12 +29,6 @@ public enum GroupMemberRoleEnum {
         return code;
     }
 
-    /**
-     * 根据code获取指定的枚举对象
-     * @author LiQi
-     * @param code the code
-     * @return GroupMemberRoleEnum
-     */
     public static GroupMemberRoleEnum getItemByCode(int code) {
         for (int i = 0; i < GroupMemberRoleEnum.values().length; i++) {
             if(code == GroupMemberRoleEnum.values()[i].getCode()) {

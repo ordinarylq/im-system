@@ -1,18 +1,12 @@
 package com.lq.im.service.group.model;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
-*@ClassName: ImGroupMemberDAO
-*@Author: LiQi
-*@Date: 2023-06-01 14:18
-*@Version: V1.0
-*@Description:
-*/
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,7 +16,7 @@ public class ImGroupMemberDAO {
     /**
      * 主键id
      */
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
     
     /**

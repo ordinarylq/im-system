@@ -1,20 +1,12 @@
-package com.lq.im.service.group.model;
+package com.lq.im.service.group.model.req;
 
-
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
+import com.lq.im.common.model.RequestBase;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@TableName("im_group")
-public class ImGroupDAO {
-    /**
-     * 应用id
-     */
-    private Integer appId;
+public class ImportGroupReq extends RequestBase {
 
     /**
      * 群组id
@@ -34,8 +26,9 @@ public class ImGroupDAO {
     /**
      * 群组名称
      */
+    @NotBlank(message = "群组名称不能为空")
     private String groupName;
-    
+
     /**
      * 是否开启群禁言 0-未开启 1-已开启
      */

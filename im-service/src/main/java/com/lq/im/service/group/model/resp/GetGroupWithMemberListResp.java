@@ -1,19 +1,14 @@
-package com.lq.im.service.group.model;
+package com.lq.im.service.group.model.resp;
 
-
-import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
+import com.lq.im.service.group.model.req.ImGroupMemberDTO;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@TableName("im_group")
-public class ImGroupDAO {
-    /**
-     * 应用id
-     */
+public class GetGroupWithMemberListResp {
+
     private Integer appId;
 
     /**
@@ -34,17 +29,13 @@ public class ImGroupDAO {
     /**
      * 群组名称
      */
+    @NotBlank(message = "群组名称不能为空")
     private String groupName;
-    
+
     /**
      * 是否开启群禁言 0-未开启 1-已开启
      */
     private Integer hasMute;
-
-    /**
-     * 群组状态 0-正常 1-已解散
-     */
-    private Integer status;
 
     /**
      * 申请加群处理方式 0-需要验证 1-自由加入 3-禁止加入
@@ -72,22 +63,14 @@ public class ImGroupDAO {
     private Integer maxMemberCount;
 
     /**
-     * 序列
+     * 群组状态 0-正常 1-已解散
      */
-    private Long sequence;
-
-    /**
-     * 创建时间
-     */
-    private Long createTime;
-
-    /**
-     * 更新时间
-     */
-    private Long updateTime;
+    private Integer status;
 
     /**
      * 扩展
      */
     private String extra;
+
+    private List<ImGroupMemberDTO> memberList;
 }
