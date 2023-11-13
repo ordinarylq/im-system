@@ -17,4 +17,10 @@ public interface ImGroupMemberMapper extends BaseMapper<ImGroupMemberDAO> {
             "where m.app_id = #{appId} and m.group_id = #{groupId} "
     )
     List<ImGroupMemberDTO> getGroupMemberList(@Param("appId") Integer appId, @Param("groupId") String groupId);
+
+    @Select("select m.group_id " +
+            "from im_group_member m " +
+            "where m.app_id = #{appId} and m.member_id = #{memberId} and m.member_role != 3"
+    )
+    List<String> getGroupIdListBy(@Param("appId") Integer appId, @Param("memberId") String memberId);
 }

@@ -146,6 +146,12 @@ public interface ApplicationExceptionEnum {
     int GET_GROUP_MEMBER_ERROR_CODE = 40020;
     String GET_GROUP_MEMBER_ERROR_MESSAGE = "获取群组用户失败";
 
+    int GET_JOINED_GROUP_ERROR_CODE = 40021;
+    String GET_JOINED_GROUP_ERROR_MESSAGE = "获取已加入的群组失败";
+
+    int DISMISS_GROUP_ERROR_CODE = 40022;
+    String DISMISS_GROUP_ERROR_MESSAGE = "解散群组失败";
+
     int SERVER_NOT_AVAILABLE_CODE = 71000;
     String SERVER_NOT_AVAILABLE_MESSAGE = "没有可用的服务";
 

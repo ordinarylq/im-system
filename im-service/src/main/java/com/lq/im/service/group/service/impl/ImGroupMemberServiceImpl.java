@@ -135,4 +135,20 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         }
         return ResponseVO.successResponse(groupMemberList);
     }
+
+    @Override
+    public ResponseVO<?> getGroupIdListBy(Integer appId, String userId) {
+        ResponseVO<ImUserDAO> responseVO = this.imUserService.getSingleUserInfo(userId, appId);
+        if (!responseVO.isOk()) {
+            return responseVO;
+        }
+        List<String> groupIdList;
+        try {
+            groupIdList = this.imGroupMemberMapper.getGroupIdListBy(appId, userId);
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.GET_JOINED_GROUP_ERROR);
+        }
+        return ResponseVO.successResponse(groupIdList);
+    }
 }

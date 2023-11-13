@@ -2,6 +2,7 @@ package com.lq.im.service.group.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.GroupErrorCodeEnum;
 import com.lq.im.common.enums.GroupMemberRoleEnum;
@@ -10,15 +11,13 @@ import com.lq.im.common.enums.GroupTypeEnum;
 import com.lq.im.service.group.mapper.ImGroupMapper;
 import com.lq.im.service.group.model.ImGroupDAO;
 import com.lq.im.service.group.model.ImGroupMemberDAO;
-import com.lq.im.service.group.model.req.CreateGroupReq;
-import com.lq.im.service.group.model.req.ImGroupMemberDTO;
-import com.lq.im.service.group.model.req.ImportGroupReq;
-import com.lq.im.service.group.model.req.UpdateGroupInfoReq;
+import com.lq.im.service.group.model.req.*;
 import com.lq.im.service.group.model.resp.GetGroupWithMemberListResp;
 import com.lq.im.service.group.service.ImGroupMemberService;
 import com.lq.im.service.group.service.ImGroupService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.lq.im.service.user.service.impl.ImUserServiceImpl.ERROR_MESSAGE;
 
@@ -195,5 +195,61 @@ public class ImGroupServiceImpl implements ImGroupService {
         List<ImGroupMemberDTO> groupMemberDTOList = groupMemberListResponseVO.getData();
         resp.setMemberList(groupMemberDTOList);
         return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public ResponseVO<?> getJoinedGroupList(GetJoinedGroupListReq req) {
+        ResponseVO<?> response = this.imGroupMemberService.getGroupIdListBy(req.getAppId(), req.getUserId());
+        if (!response.isOk()) {
+            return response;
+        }
+        List<String> groupIdList = (List<String>) response.getData();
+        QueryWrapper<ImGroupDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", req.getAppId())
+                .in("group_type", req.getGroupTypeList())
+                .in("group_id", groupIdList);
+        List<ImGroupDAO> groupDAOList;
+        try {
+            groupDAOList = this.imGroupMapper.selectList(queryWrapper);
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.GET_JOINED_GROUP_ERROR);
+        }
+        return ResponseVO.successResponse(groupDAOList);
+    }
+
+    @Override
+    public ResponseVO<?> dismissGroup(DismissGroupReq req) {
+        ResponseVO<ImGroupDAO> response = this.getGroup(req.getAppId(), req.getGroupId());
+        if (!response.isOk()) {
+            return response;
+        }
+        ImGroupDAO groupData = response.getData();
+        boolean isAdmin = false;
+        if (!isAdmin) {
+            if (groupData.getGroupType() == GroupTypeEnum.PRIVATE.getCode()) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_APP_MANAGER_ROLE);
+            }
+            boolean isOwner = Objects.equals(req.getOperator(), groupData.getOwnerId());
+            if (groupData.getGroupType() == GroupTypeEnum.PUBLIC.getCode() && !isOwner) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_OWNER_ROLE);
+            }
+        }
+        UpdateWrapper<ImGroupDAO> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.set("status", GroupStatusEnum.DISMISSED.getCode())
+                .set("update_time", System.currentTimeMillis())
+                .eq("app_id", req.getAppId())
+                .eq("group_id", req.getGroupId());
+        try {
+            int updateResult = this.imGroupMapper.update(null, updateWrapper);
+            if (updateResult != 1) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.DISMISS_GROUP_ERROR);
+            }
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.DISMISS_GROUP_ERROR);
+        }
+        return ResponseVO.successResponse();
     }
 }

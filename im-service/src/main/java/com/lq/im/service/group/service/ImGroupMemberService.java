@@ -15,4 +15,6 @@ public interface ImGroupMemberService {
     ResponseVO<ImGroupMemberDAO> getGroupMemberInfo(Integer appId, String groupId, String memberId);
 
     ResponseVO<List<ImGroupMemberDTO>> getGroupMemberList(Integer appId, String groupId);
+
+    ResponseVO<?> getGroupIdListBy(Integer appId, String memberId);
 }

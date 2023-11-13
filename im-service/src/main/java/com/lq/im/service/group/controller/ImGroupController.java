@@ -1,9 +1,7 @@
 package com.lq.im.service.group.controller;
 
 import com.lq.im.common.ResponseVO;
-import com.lq.im.service.group.model.req.CreateGroupReq;
-import com.lq.im.service.group.model.req.ImportGroupReq;
-import com.lq.im.service.group.model.req.UpdateGroupInfoReq;
+import com.lq.im.service.group.model.req.*;
 import com.lq.im.service.group.service.ImGroupService;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,5 +38,19 @@ public class ImGroupController {
     public ResponseVO<?> getGroupWithMemberList(@RequestParam("app-id") Integer appId,
                                                 @RequestParam("group-id") @NotBlank String groupId) {
         return this.imGroupService.getGroupWithMemberList(appId, groupId);
+    }
+
+    @PostMapping("/joined")
+    public ResponseVO<?> getJoinedGroupInfoList(@RequestParam("app-id") Integer appId,
+                                                @RequestBody @Valid GetJoinedGroupListReq req) {
+        req.setAppId(appId);
+        return this.imGroupService.getJoinedGroupList(req);
+    }
+
+    @PostMapping("/dismiss")
+    public ResponseVO<?> dismissGroupList(@RequestParam("app-id") Integer appId,
+                                                @RequestBody @Valid DismissGroupReq req) {
+        req.setAppId(appId);
+        return this.imGroupService.dismissGroup(req);
     }
 }

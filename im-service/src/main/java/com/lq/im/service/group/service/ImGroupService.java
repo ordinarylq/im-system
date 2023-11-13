@@ -2,9 +2,9 @@ package com.lq.im.service.group.service;
 
 import com.lq.im.common.ResponseVO;
 import com.lq.im.service.group.model.ImGroupDAO;
-import com.lq.im.service.group.model.req.CreateGroupReq;
-import com.lq.im.service.group.model.req.ImportGroupReq;
-import com.lq.im.service.group.model.req.UpdateGroupInfoReq;
+import com.lq.im.service.group.model.req.*;
+
+import java.util.List;
 
 public interface ImGroupService {
     ResponseVO<?> importGroup(ImportGroupReq req);
@@ -19,4 +19,8 @@ public interface ImGroupService {
     ResponseVO<ImGroupDAO> getGroup(Integer appId, String groupId);
 
     ResponseVO<?> getGroupWithMemberList(Integer appId, String groupId);
+
+    ResponseVO<?> getJoinedGroupList(GetJoinedGroupListReq req);
+
+    ResponseVO<?> dismissGroup(DismissGroupReq req);
 }
