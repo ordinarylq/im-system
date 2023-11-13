@@ -105,7 +105,7 @@ public interface ApplicationExceptionEnum {
     String USER_DID_NOT_JOIN_GROUP_MESSAGE = "用户不在该群";
 
     int THIS_OPERATION_NEEDS_MANAGER_ROLE_CODE = 40007;
-    String THIS_OPERATION_NEEDS_MANAGER_ROLE_MESSAGE = "该操作只允许群主/管理员完成";
+    String THIS_OPERATION_NEEDS_MANAGER_ROLE_MESSAGE = "该操作只允许群主或管理员完成";
 
     int THIS_OPERATION_NEEDS_APP_MANAGER_ROLE_CODE = 40008;
     String THIS_OPERATION_NEEDS_APP_MANAGER_ROLE_MESSAGE = "该操作只允许APP管理员完成";
@@ -151,6 +151,9 @@ public interface ApplicationExceptionEnum {
 
     int DISMISS_GROUP_ERROR_CODE = 40022;
     String DISMISS_GROUP_ERROR_MESSAGE = "解散群组失败";
+
+    int UPDATE_GROUP_MEMBER_INFO_ERROR_CODE = 40023;
+    String UPDATE_GROUP_MEMBER_INFO_ERROR_MESSAGE = "更新群组成员信息失败";
 
     int SERVER_NOT_AVAILABLE_CODE = 71000;
     String SERVER_NOT_AVAILABLE_MESSAGE = "没有可用的服务";

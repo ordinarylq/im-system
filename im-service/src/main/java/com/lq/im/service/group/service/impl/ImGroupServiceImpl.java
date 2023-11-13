@@ -15,9 +15,10 @@ import com.lq.im.service.group.model.req.*;
 import com.lq.im.service.group.model.resp.GetGroupWithMemberListResp;
 import com.lq.im.service.group.service.ImGroupMemberService;
 import com.lq.im.service.group.service.ImGroupService;
+import com.lq.im.service.user.model.ImUserDAO;
+import com.lq.im.service.user.service.ImUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,16 +38,18 @@ public class ImGroupServiceImpl implements ImGroupService {
     private ImGroupMemberService imGroupMemberService;
 
     @Resource
+    private ImUserService imUserService;
+
+    @Resource
     private ImGroupMapper imGroupMapper;
 
     @Override
+    @Transactional
     public ResponseVO<?> importGroup(ImportGroupReq req) {
-        QueryWrapper<ImGroupDAO> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("app_id", req.getAppId())
-                .eq("group_id", req.getGroupId());
+
         if (StringUtils.isBlank(req.getGroupId())) {
             req.setGroupId(IdUtil.simpleUUID());
-        } else if (this.imGroupMapper.selectCount(queryWrapper) > 0) {
+        } else if (checkIfGroupExists(req.getAppId(), req.getGroupId()).getData()) {
             return ResponseVO.errorResponse(GroupErrorCodeEnum.GROUP_ALREADY_EXISTS);
         }
         if (req.getGroupType() == GroupTypeEnum.PUBLIC.getCode() && StringUtils.isBlank(req.getOwnerId())) {
@@ -80,18 +83,12 @@ public class ImGroupServiceImpl implements ImGroupService {
         if (!isAdmin) {
             req.setOwnerId(req.getOperator());
         }
-        ImGroupDAO groupDAO;
+        ImGroupDAO groupDAO = new ImGroupDAO();
         if (StringUtils.isBlank(req.getGroupId())) {
-            groupDAO = new ImGroupDAO();
             req.setGroupId(IdUtil.simpleUUID());
         } else {
-            ResponseVO<ImGroupDAO> responseVO = this.getGroup(req.getAppId(), req.getGroupId());
-            if (responseVO.isOk() && responseVO.getData().getStatus() == GroupStatusEnum.NORMAL.getCode()) {
+            if (checkIfGroupExists(req.getAppId(), req.getGroupId()).getData()) {
                 return ResponseVO.errorResponse(GroupErrorCodeEnum.GROUP_ALREADY_EXISTS);
-            } else if (responseVO.isOk()) {
-                groupDAO = responseVO.getData();
-            } else {
-                groupDAO = new ImGroupDAO();
             }
         }
         if (req.getGroupType() == GroupTypeEnum.PUBLIC.getCode() && StringUtils.isBlank(req.getOwnerId())) {
@@ -125,19 +122,28 @@ public class ImGroupServiceImpl implements ImGroupService {
     }
 
     @Override
+    public ResponseVO<Boolean> checkIfGroupExists(Integer appId, String groupId) {
+        QueryWrapper<ImGroupDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", appId)
+                .eq("group_id", groupId)
+                .eq("status", GroupStatusEnum.NORMAL.getCode());
+        boolean result = this.imGroupMapper.selectCount(queryWrapper) > 0;
+        return ResponseVO.successResponse(result);
+    }
+
+    @Override
+    @Transactional
     public ResponseVO<?> updateGroupInfo(UpdateGroupInfoReq req) {
         ResponseVO<ImGroupDAO> responseVO = this.getGroup(req.getAppId(), req.getGroupId());
         if (!responseVO.isOk()) {
             return responseVO;
         }
-        if (responseVO.getData().getStatus() == GroupStatusEnum.DISMISSED.getCode()) {
-            return ResponseVO.errorResponse(GroupErrorCodeEnum.GROUP_IS_DISMISSED);
-        }
         ImGroupDAO originalGroupInfo = responseVO.getData();
         boolean isAdmin = false;
         if (!isAdmin) {
             // 1. 检查操作人角色
-            ResponseVO<ImGroupMemberDAO> memberInfoResponseVO = this.imGroupMemberService.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
+            ResponseVO<ImGroupMemberDAO> memberInfoResponseVO =
+                    this.imGroupMemberService.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
             if (!memberInfoResponseVO.isOk()) {
                 return memberInfoResponseVO;
             }
@@ -171,7 +177,8 @@ public class ImGroupServiceImpl implements ImGroupService {
     public ResponseVO<ImGroupDAO> getGroup(Integer appId, String groupId) {
         QueryWrapper<ImGroupDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("app_id", appId)
-                .eq("group_id", groupId);
+                .eq("group_id", groupId)
+                .eq("status", GroupStatusEnum.NORMAL.getCode());
         ImGroupDAO groupDAO = this.imGroupMapper.selectOne(queryWrapper);
         if (groupDAO == null) {
             return ResponseVO.errorResponse(GroupErrorCodeEnum.GROUP_DOES_NOT_EXIST);
@@ -188,7 +195,8 @@ public class ImGroupServiceImpl implements ImGroupService {
         ImGroupDAO groupInfo = responseVO.getData();
         GetGroupWithMemberListResp resp = new GetGroupWithMemberListResp();
         BeanUtils.copyProperties(groupInfo, resp);
-        ResponseVO<List<ImGroupMemberDTO>> groupMemberListResponseVO = this.imGroupMemberService.getGroupMemberList(appId, groupId);
+        ResponseVO<List<ImGroupMemberDTO>> groupMemberListResponseVO =
+                this.imGroupMemberService.getGroupMemberList(appId, groupId);
         if (!groupMemberListResponseVO.isOk()) {
             return groupMemberListResponseVO;
         }
@@ -220,6 +228,7 @@ public class ImGroupServiceImpl implements ImGroupService {
     }
 
     @Override
+    @Transactional
     public ResponseVO<?> dismissGroup(DismissGroupReq req) {
         ResponseVO<ImGroupDAO> response = this.getGroup(req.getAppId(), req.getGroupId());
         if (!response.isOk()) {
@@ -249,6 +258,74 @@ public class ImGroupServiceImpl implements ImGroupService {
         } catch (Exception e) {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.DISMISS_GROUP_ERROR);
+        }
+        return ResponseVO.successResponse();
+    }
+
+    @Override
+    @Transactional
+    public ResponseVO<?> handOverGroup(HandOverGroupReq req) {
+        ResponseVO<ImGroupDAO> responseVO = this.getGroup(req.getAppId(), req.getGroupId());
+        if (!responseVO.isOk()) {
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.GROUP_DOES_NOT_EXIST);
+        }
+        ImGroupDAO groupInfo = responseVO.getData();
+        ResponseVO<ImUserDAO> operatorInfoResp = this.imUserService.getSingleUserInfo(req.getOperator(), req.getAppId());
+        if (!operatorInfoResp.isOk()) {
+            return operatorInfoResp;
+        }
+        ResponseVO<ImUserDAO> assigneeUserInfoResp = this.imUserService.getSingleUserInfo(req.getAssigneeId(), req.getAppId());
+        if (!assigneeUserInfoResp.isOk()) {
+            return assigneeUserInfoResp;
+        }
+        boolean isAdmin = false;
+        if (!isAdmin) {
+            ResponseVO<ImGroupMemberDAO> operatorMemberInfoResponse =
+                    this.imGroupMemberService.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
+            if (!operatorMemberInfoResponse.isOk()) {
+                return operatorMemberInfoResponse;
+            }
+            ImGroupMemberDAO operatorMemberInfo = operatorMemberInfoResponse.getData();
+            boolean isManager = operatorMemberInfo.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode();
+            // 公开群只有群主可以移交群
+            if (groupInfo.getGroupType() == GroupTypeEnum.PUBLIC.getCode() && !isManager) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_OWNER_ROLE);
+            }
+        }
+        ResponseVO<ImGroupMemberDAO> assigneeMemberInfoResp =
+                this.imGroupMemberService.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getAssigneeId());
+        if (!assigneeMemberInfoResp.isOk()) {
+            return assigneeMemberInfoResp;
+        }
+        UpdateWrapper<ImGroupDAO> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.set("owner_id", req.getAssigneeId())
+                .set("update_time", System.currentTimeMillis())
+                .eq("app_id", req.getAppId())
+                .eq("group_id", req.getGroupId());
+        try {
+            int updateGroupResult = this.imGroupMapper.update(null, updateWrapper);
+            if (updateGroupResult != 1) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
+            }
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
+        }
+        ImGroupMemberDTO memberDTO = new ImGroupMemberDTO();
+        memberDTO.setMemberId(req.getOperator());
+        memberDTO.setMemberRole(GroupMemberRoleEnum.ORDINARY.getCode());
+        ResponseVO<?> updateOwnerMemberResp =
+                this.imGroupMemberService.updateGroupMemberInfo(req.getAppId(), req.getGroupId(), memberDTO);
+        if (!updateOwnerMemberResp.isOk()) {
+            return updateOwnerMemberResp;
+        }
+        memberDTO = new ImGroupMemberDTO();
+        memberDTO.setMemberId(req.getAssigneeId());
+        memberDTO.setMemberRole(GroupMemberRoleEnum.OWNER.getCode());
+        ResponseVO<?> updateAssigneeMemberResp =
+                this.imGroupMemberService.updateGroupMemberInfo(req.getAppId(), req.getGroupId(), memberDTO);
+        if (!updateOwnerMemberResp.isOk()) {
+            return updateAssigneeMemberResp;
         }
         return ResponseVO.successResponse();
     }

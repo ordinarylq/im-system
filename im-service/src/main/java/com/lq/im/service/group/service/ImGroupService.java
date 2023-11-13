@@ -4,12 +4,13 @@ import com.lq.im.common.ResponseVO;
 import com.lq.im.service.group.model.ImGroupDAO;
 import com.lq.im.service.group.model.req.*;
 
-import java.util.List;
 
 public interface ImGroupService {
     ResponseVO<?> importGroup(ImportGroupReq req);
 
     ResponseVO<?> createGroup(CreateGroupReq req);
+
+    ResponseVO<?> checkIfGroupExists(Integer appId, String groupId);
 
     /**
      * 更新群组信息。
@@ -23,4 +24,8 @@ public interface ImGroupService {
     ResponseVO<?> getJoinedGroupList(GetJoinedGroupListReq req);
 
     ResponseVO<?> dismissGroup(DismissGroupReq req);
+
+    ResponseVO<?> handOverGroup(HandOverGroupReq req);
+
+
 }

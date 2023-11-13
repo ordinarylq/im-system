@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.GroupErrorCodeEnum;
 import com.lq.im.common.enums.GroupMemberRoleEnum;
+import com.lq.im.common.enums.GroupTypeEnum;
 import com.lq.im.service.group.mapper.ImGroupMemberMapper;
+import com.lq.im.service.group.model.ImGroupDAO;
 import com.lq.im.service.group.model.ImGroupMemberDAO;
-import com.lq.im.service.group.model.req.ImGroupMemberDTO;
-import com.lq.im.service.group.model.req.ImportGroupMemberReq;
+import com.lq.im.service.group.model.req.*;
 import com.lq.im.service.group.model.resp.ImportGroupMemberResp;
+import com.lq.im.service.group.model.resp.InviteUserResp;
 import com.lq.im.service.group.service.ImGroupMemberService;
 import com.lq.im.service.group.service.ImGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.lq.im.service.user.service.impl.ImUserServiceImpl.ERROR_MESSAGE;
 
@@ -68,6 +71,7 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
     }
 
     @Override
+    @Transactional
     public ResponseVO<?> addGroupMember(Integer appId, String groupId, ImGroupMemberDTO groupMemberDTO) {
         ResponseVO<ImUserDAO> responseVO = this.imUserService.getSingleUserInfo(groupMemberDTO.getMemberId(), appId);
         if (!responseVO.isOk()) {
@@ -112,6 +116,149 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
     }
 
     @Override
+    @Transactional
+    public ResponseVO<?> inviteUserIntoGroup(InviteUserReq req) {
+        ResponseVO<ImGroupDAO> response = this.imGroupService.getGroup(req.getAppId(), req.getGroupId());
+        if (!response.isOk()) {
+            return response;
+        }
+        ImGroupDAO groupInfo = response.getData();
+        boolean isAdmin = false;
+        /*
+         * 私有群（private）	类似普通微信群，创建后仅支持已在群内的好友邀请加群，且无需被邀请方同意或群主审批
+         * 公开群（Public）	类似 QQ 群，创建后群主可以指定群管理员，需要群主或管理员审批通过才能入群
+         * 群类型 1私有群（类似微信） 2公开群(类似qq）
+         */
+        if (!isAdmin) {
+            ResponseVO<ImGroupMemberDAO> operatorInfoResp =
+                    this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
+            if (!operatorInfoResp.isOk()) {
+                return operatorInfoResp;
+            }
+            boolean isManager = operatorInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode();
+            boolean isOwner = operatorInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.OWNER.getCode();
+            if (groupInfo.getGroupType() == GroupTypeEnum.PUBLIC.getCode() && !(isManager || isOwner)) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_MANAGER_ROLE);
+            }
+        }
+        InviteUserResp resp = new InviteUserResp();
+        for (String userId : req.getInviteeIdList()) {
+            ImGroupMemberDTO memberDTO = new ImGroupMemberDTO();
+            memberDTO.setMemberId(userId);
+            memberDTO.setMemberRole(GroupMemberRoleEnum.ORDINARY.getCode());
+            ResponseVO<?> responseVO = null;
+            try {
+                responseVO = this.imGroupMemberService.addGroupMember(req.getAppId(), req.getGroupId(), memberDTO);
+                if (!responseVO.isOk()) {
+                    resp.getFailMemberItemList().add(new ImportGroupMemberResp.ResultItem(userId, responseVO.getMsg()));
+                } else {
+                    resp.getSuccessUserIdList().add(userId);
+                }
+            } catch (Exception e) {
+                log.error(ERROR_MESSAGE, e);
+                resp.getFailMemberItemList().add(
+                        new ImportGroupMemberResp.ResultItem(userId, responseVO != null ? responseVO.getMsg() : ""));
+            }
+        }
+        return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    @Transactional
+    public ResponseVO<?> exitGroup(ExitGroupReq req) {
+        ResponseVO<ImUserDAO> responseVO = this.imUserService.getSingleUserInfo(req.getOperator(), req.getAppId());
+        if (!responseVO.isOk()) {
+            return responseVO;
+        }
+        ResponseVO<ImGroupDAO> response = this.imGroupService.getGroup(req.getAppId(), req.getGroupId());
+        if (!response.isOk()) {
+            return response;
+        }
+        if (response.getData().getGroupType() == GroupTypeEnum.PUBLIC.getCode() &&
+                Objects.equals(response.getData().getOwnerId(), req.getOperator())) {
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.PUBLIC_GROUP_MUST_HAVE_OWNER);
+        }
+        return this.imGroupMemberService.leaveGroup(req.getAppId(), req.getGroupId(), req.getOperator());
+    }
+
+    @Override
+    @Transactional
+    public ResponseVO<?> removeMemberFromGroup(RemoveMemberReq req) {
+        ResponseVO<ImUserDAO> operatorUserInfoResp = this.imUserService.getSingleUserInfo(req.getOperator(), req.getAppId());
+        if (!operatorUserInfoResp.isOk()) {
+            return operatorUserInfoResp;
+        }
+        ResponseVO<ImUserDAO> memberUserInfoResp = this.imUserService.getSingleUserInfo(req.getMemberId(), req.getAppId());
+        if (!memberUserInfoResp.isOk()) {
+            return memberUserInfoResp;
+        }
+        ResponseVO<ImGroupDAO> response = this.imGroupService.getGroup(req.getAppId(), req.getGroupId());
+        if (!response.isOk()) {
+            return response;
+        }
+        ImGroupDAO groupInfo = response.getData();
+        boolean isAdmin = false;
+        if (!isAdmin) {
+            ResponseVO<ImGroupMemberDAO> operatorInfoResp =
+                    this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
+            if (!operatorInfoResp.isOk()) {
+                return operatorInfoResp;
+            }
+            ResponseVO<ImGroupMemberDAO> memberInfoResp =
+                    this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getMemberId());
+            if (!memberInfoResp.isOk()) {
+                return memberInfoResp;
+            }
+            boolean isOperatorManager = operatorInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode();
+            boolean isOperatorOwner = operatorInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.OWNER.getCode();
+            boolean isMemberManager = memberInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode();
+            boolean isMemberOwner = memberInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.OWNER.getCode();
+            if (groupInfo.getGroupType() == GroupTypeEnum.PRIVATE.getCode() && !isOperatorOwner) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_OWNER_ROLE);
+            }
+            if (groupInfo.getGroupType() == GroupTypeEnum.PUBLIC.getCode() && !(isOperatorManager || isOperatorOwner)) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_MANAGER_ROLE);
+            } else if (groupInfo.getGroupType() == GroupTypeEnum.PUBLIC.getCode() && isMemberOwner) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.CAN_NOT_REMOVE_GROUP_OWNER);
+            } else if (groupInfo.getGroupType() == GroupTypeEnum.PUBLIC.getCode()
+                    && isOperatorManager && isMemberManager) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_OWNER_ROLE);
+            }
+        }
+        ResponseVO<?> responseVO = this.imGroupMemberService.leaveGroup(req.getAppId(), req.getGroupId(), req.getMemberId());
+        if (!responseVO.isOk()) {
+            return responseVO;
+        }
+        return ResponseVO.successResponse();
+    }
+
+    @Override
+    public ResponseVO<?> leaveGroup(Integer appId, String groupId, String memberId) {
+        ResponseVO<ImGroupMemberDAO> memberInfoResp =
+                this.getGroupMemberInfo(appId, groupId, memberId);
+        if (!memberInfoResp.isOk()) {
+            return memberInfoResp;
+        }
+        if (memberInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
+        }
+        ImGroupMemberDAO groupDAO = new ImGroupMemberDAO();
+        groupDAO.setId(memberInfoResp.getData().getId());
+        groupDAO.setMemberRole(GroupMemberRoleEnum.LEAVE.getCode());
+        groupDAO.setLeaveTime(System.currentTimeMillis());
+        try {
+            int updateResult = this.imGroupMemberMapper.updateById(groupDAO);
+            if (updateResult != 1) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
+            }
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
+        }
+        return ResponseVO.successResponse();
+    }
+
+    @Override
     public ResponseVO<ImGroupMemberDAO> getGroupMemberInfo(Integer appId, String groupId, String memberId) {
         QueryWrapper<ImGroupMemberDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("app_id", appId)
@@ -150,5 +297,26 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
             return ResponseVO.errorResponse(GroupErrorCodeEnum.GET_JOINED_GROUP_ERROR);
         }
         return ResponseVO.successResponse(groupIdList);
+    }
+
+    @Override
+    @Transactional
+    public ResponseVO<?> updateGroupMemberInfo(Integer appId, String groupId, ImGroupMemberDTO groupMemberDTO) {
+        QueryWrapper<ImGroupMemberDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("app_id", appId)
+                .eq("group_id", groupId)
+                .eq("member_id", groupMemberDTO.getMemberId());
+        ImGroupMemberDAO groupMemberDAO = new ImGroupMemberDAO();
+        BeanUtils.copyProperties(groupMemberDTO, groupMemberDAO);
+        try {
+            int updateResult = this.imGroupMemberMapper.update(groupMemberDAO, queryWrapper);
+            if (updateResult != 1) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_MEMBER_INFO_ERROR);
+            }
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_MEMBER_INFO_ERROR);
+        }
+        return ResponseVO.successResponse();
     }
 }

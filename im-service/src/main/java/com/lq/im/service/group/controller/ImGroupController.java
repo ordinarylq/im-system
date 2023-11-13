@@ -53,4 +53,11 @@ public class ImGroupController {
         req.setAppId(appId);
         return this.imGroupService.dismissGroup(req);
     }
+
+    @PostMapping("/hand-over")
+    public ResponseVO<?> handOverGroupList(@RequestParam("app-id") Integer appId,
+                                          @RequestBody @Valid HandOverGroupReq req) {
+        req.setAppId(appId);
+        return this.imGroupService.handOverGroup(req);
+    }
 }

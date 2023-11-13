@@ -1,7 +1,10 @@
 package com.lq.im.service.group.controller;
 
 import com.lq.im.common.ResponseVO;
+import com.lq.im.service.group.model.req.ExitGroupReq;
 import com.lq.im.service.group.model.req.ImportGroupMemberReq;
+import com.lq.im.service.group.model.req.InviteUserReq;
+import com.lq.im.service.group.model.req.RemoveMemberReq;
 import com.lq.im.service.group.service.ImGroupMemberService;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,4 +24,27 @@ public class ImGroupMemberController {
         req.setAppId(appId);
         return this.imGroupMemberService.importGroupMember(req);
     }
+
+    @PostMapping("/invite")
+    public ResponseVO<?> inviteMemberToGroup(@RequestBody @Valid InviteUserReq req,
+                                             @RequestParam("app-id") Integer appId) {
+        req.setAppId(appId);
+        return this.imGroupMemberService.inviteUserIntoGroup(req);
+    }
+
+    @PostMapping("/exit")
+    public ResponseVO<?> exitGroup(@RequestBody @Valid ExitGroupReq req,
+                                             @RequestParam("app-id") Integer appId) {
+        req.setAppId(appId);
+        return this.imGroupMemberService.exitGroup(req);
+    }
+
+    @PostMapping("/remove")
+    public ResponseVO<?> removeMemberFromGroup(@RequestBody @Valid RemoveMemberReq req,
+                                             @RequestParam("app-id") Integer appId) {
+        req.setAppId(appId);
+        return this.imGroupMemberService.removeMemberFromGroup(req);
+    }
+
+
 }
