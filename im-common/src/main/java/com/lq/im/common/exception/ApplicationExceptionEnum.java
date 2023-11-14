@@ -155,6 +155,9 @@ public interface ApplicationExceptionEnum {
     int UPDATE_GROUP_MEMBER_INFO_ERROR_CODE = 40023;
     String UPDATE_GROUP_MEMBER_INFO_ERROR_MESSAGE = "更新群组成员信息失败";
 
+    int CAN_NOT_SET_MANAGER_IN_PRIVATE_GROUP_CODE = 40024;
+    String CAN_NOT_SET_MANAGER_IN_PRIVATE_GROUP_MESSAGE = "私有群不能设置管理员";
+
     int SERVER_NOT_AVAILABLE_CODE = 71000;
     String SERVER_NOT_AVAILABLE_MESSAGE = "没有可用的服务";
 

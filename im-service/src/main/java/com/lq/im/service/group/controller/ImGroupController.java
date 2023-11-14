@@ -60,4 +60,11 @@ public class ImGroupController {
         req.setAppId(appId);
         return this.imGroupService.handOverGroup(req);
     }
+
+    @PostMapping("/mute")
+    public ResponseVO<?> muteGroup(@RequestParam("app-id") Integer appId,
+                                           @RequestBody @Valid MuteGroupReq req) {
+        req.setAppId(appId);
+        return this.imGroupService.muteGroup(req);
+    }
 }

@@ -27,5 +27,7 @@ public interface ImGroupService {
 
     ResponseVO<?> handOverGroup(HandOverGroupReq req);
 
+    ResponseVO<?> muteGroup(MuteGroupReq req);
+
 
 }

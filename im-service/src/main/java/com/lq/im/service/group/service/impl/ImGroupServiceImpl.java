@@ -329,4 +329,45 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
         return ResponseVO.successResponse();
     }
+
+    @Override
+    public ResponseVO<?> muteGroup(MuteGroupReq req) {
+        ResponseVO<ImGroupDAO> responseVO = this.getGroup(req.getAppId(), req.getGroupId());
+        if (!responseVO.isOk()) {
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.GROUP_DOES_NOT_EXIST);
+        }
+        boolean isAdmin = false;
+        if (!isAdmin) {
+            // 操作人为管理员或群主才可以设置群禁言
+            ResponseVO<ImGroupMemberDAO> operatorInfoResp =
+                    this.imGroupMemberService.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
+            if (!operatorInfoResp.isOk()) {
+                return operatorInfoResp;
+            }
+            ImGroupMemberDAO operatorInfo = operatorInfoResp.getData();
+            if (operatorInfo.getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
+            }
+            boolean isManager = operatorInfo.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode();
+            boolean isOwner = operatorInfo.getMemberRole() ==GroupMemberRoleEnum.OWNER.getCode();
+            if (!(isManager || isOwner)) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_MANAGER_ROLE);
+            }
+        }
+        UpdateWrapper<ImGroupDAO> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.set("has_mute", 1)
+                .set("update_time", System.currentTimeMillis())
+                .eq("app_id", req.getAppId())
+                .eq("group_id", req.getGroupId());
+        try {
+            int updateResult = this.imGroupMapper.update(null, updateWrapper);
+            if (updateResult != 1) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
+            }
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
+        }
+        return ResponseVO.successResponse();
+    }
 }

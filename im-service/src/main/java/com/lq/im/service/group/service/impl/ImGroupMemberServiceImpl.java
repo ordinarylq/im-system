@@ -16,6 +16,7 @@ import com.lq.im.service.group.service.ImGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -310,6 +311,126 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         BeanUtils.copyProperties(groupMemberDTO, groupMemberDAO);
         try {
             int updateResult = this.imGroupMemberMapper.update(groupMemberDAO, queryWrapper);
+            if (updateResult != 1) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_MEMBER_INFO_ERROR);
+            }
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_MEMBER_INFO_ERROR);
+        }
+        return ResponseVO.successResponse();
+    }
+
+    @Override
+    @Transactional
+    public ResponseVO<?> updateGroupMemberInfo(UpdateGroupMemberReq req) {
+        ResponseVO<?> response = this.imGroupService.getGroup(req.getAppId(), req.getGroupId());
+        if (!response.isOk()) {
+            return response;
+        }
+        ImGroupDAO groupInfo = (ImGroupDAO) response.getData();
+        // 检查被修改人是否在群内
+        ResponseVO<ImGroupMemberDAO> memberInfoResp =
+                this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getMemberId());
+        if (!memberInfoResp.isOk()) {
+            return memberInfoResp;
+        }
+        if (memberInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
+        }
+        // 2. 权限控制
+        boolean isAdmin = false;
+        if (!isAdmin) {
+            boolean isUpdateOneSelfInfo = Objects.equals(req.getOperator(), req.getMemberId());
+            if (!StringUtils.isBlank(req.getAlias()) && !isUpdateOneSelfInfo) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_ONESELF);
+            }
+            if (req.getMemberRole() != null) {
+                // 私有群不能设置管理员
+                if (groupInfo.getGroupType() == GroupTypeEnum.PRIVATE.getCode() &&
+                        (req.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode() ||
+                                req.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode())) {
+                    return ResponseVO.errorResponse(GroupErrorCodeEnum.CAN_NOT_SET_MANAGER_IN_PRIVATE_GROUP);
+                }
+
+                // 获取操作人的成员信息
+                ResponseVO<ImGroupMemberDAO> operatorMemberInfoResp =
+                        this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
+                if (!operatorMemberInfoResp.isOk()) {
+                    return operatorMemberInfoResp;
+                }
+                ImGroupMemberDAO operatorInfo = operatorMemberInfoResp.getData();
+                boolean isOperatorManager = operatorInfo.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode();
+                boolean isOperatorOwner = operatorInfo.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode();
+                if (!(isOperatorManager || isOperatorOwner)) {
+                    return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_MANAGER_ROLE);
+                }
+                if (req.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode() && !isOperatorOwner) {
+                    return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_OWNER_ROLE);
+                }
+            }
+        }
+        // 3. 更新操作
+        ImGroupMemberDTO memberDTO = new ImGroupMemberDTO();
+        memberDTO.setMemberId(req.getMemberId());
+        if (StringUtils.isNotEmpty(req.getAlias())) {
+            memberDTO.setAlias(req.getAlias());
+        }
+        if (req.getMemberRole() != null && req.getMemberRole() != GroupMemberRoleEnum.OWNER.getCode()) {
+            memberDTO.setMemberRole(req.getMemberRole());
+        }
+        return this.imGroupMemberService.updateGroupMemberInfo(req.getAppId(), req.getGroupId(), memberDTO);
+    }
+
+    @Override
+    public ResponseVO<?> muteGroupMember(MuteGroupMemberReq req) {
+        ResponseVO<?> response = this.imGroupService.getGroup(req.getAppId(), req.getGroupId());
+        if (!response.isOk()) {
+            return response;
+        }
+        // 操作人信息
+        ResponseVO<ImGroupMemberDAO> operatorInfoResp =
+                this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
+        if (!operatorInfoResp.isOk()) {
+            return operatorInfoResp;
+        }
+        ImGroupMemberDAO operatorInfo = operatorInfoResp.getData();
+        if (operatorInfo.getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
+        }
+        // 被禁言人信息
+        ResponseVO<ImGroupMemberDAO> memberInfoResp =
+                this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getMemberId());
+        if (!memberInfoResp.isOk()) {
+            return memberInfoResp;
+        }
+        ImGroupMemberDAO memberInfo = memberInfoResp.getData();
+        if (memberInfo.getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
+        }
+        boolean isAdmin = false;
+        if (!isAdmin) {
+            boolean isOperatorManager = operatorInfo.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode();
+            boolean isOperatorOwner = operatorInfo.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode();
+            if (!(isOperatorManager || isOperatorOwner)) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_MANAGER_ROLE);
+            }
+            if (memberInfo.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode()) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_APP_MANAGER_ROLE);
+            }
+            if (isOperatorManager && memberInfo.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode()) {
+                return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_OWNER_ROLE);
+            }
+        }
+        ImGroupMemberDAO memberDAO = new ImGroupMemberDAO();
+        memberDAO.setId(memberInfo.getId());
+        if (req.getSpeakDate() > 0) {
+            memberDAO.setSpeakDate(System.currentTimeMillis() + req.getSpeakDate());
+        } else {
+            memberDAO.setSpeakDate(req.getSpeakDate());
+        }
+        try {
+            int updateResult = this.imGroupMemberMapper.updateById(memberDAO);
             if (updateResult != 1) {
                 return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_MEMBER_INFO_ERROR);
             }

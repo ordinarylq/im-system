@@ -37,4 +37,8 @@ public interface ImGroupMemberService {
     ResponseVO<?> getGroupIdListBy(Integer appId, String memberId);
 
     ResponseVO<?> updateGroupMemberInfo(Integer appId, String groupId, ImGroupMemberDTO groupMemberDTO);
+
+    ResponseVO<?> updateGroupMemberInfo(UpdateGroupMemberReq req);
+
+    ResponseVO<?> muteGroupMember(MuteGroupMemberReq req);
 }
