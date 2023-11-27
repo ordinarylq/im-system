@@ -13,6 +13,12 @@ public enum SystemCommand implements Command {
      * 0D9003
      */
     LOGOUT(0x232B),
+
+    /**
+     * 心跳
+     * 0D9999
+     */
+    PING(0x270F)
     ;
 
     private final int command;

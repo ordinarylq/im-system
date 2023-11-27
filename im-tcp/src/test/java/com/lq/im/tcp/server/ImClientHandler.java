@@ -16,7 +16,7 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
         byte[] imei = UUID.randomUUID().toString().getBytes();
 //        MyMessage message = new MyMessage("liqi", "bot", "Hello, World!");
 //        byte[] messageData = JSONObject.toJSONString(message).getBytes(StandardCharsets.UTF_8);
-        String data = "{\"userId\": \"liqi\"}";
+        String data = "{\"userId\": \"liqi1\"}";
         byte[] messageData = data.getBytes(StandardCharsets.UTF_8);
         ByteBuf buffer = ctx.alloc().buffer();
         buffer.writeInt(9000)
@@ -30,20 +30,21 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
         buffer.writeBytes(messageData);
         ctx.writeAndFlush(buffer);
 
-        Thread.sleep(5000);
-        log.info("与服务器断开连接！");
-        data = "{\"userId\": \"liqi\"}";
-        messageData = data.getBytes(StandardCharsets.UTF_8);
-        buffer = ctx.alloc().buffer();
-        buffer.writeInt(9003)
-                .writeInt(1)
-                .writeInt(4)
-                .writeInt(10000)
-                .writeInt(0x0)
-                .writeInt(imei.length)
-                .writeInt(messageData.length);
-        buffer.writeBytes(imei);
-        buffer.writeBytes(messageData);
-        ctx.writeAndFlush(buffer);
+        Thread.sleep(100000);
+        log.info("测试超时，断开连接。。。。");
+//        log.info("与服务器断开连接！");
+//        data = "{\"userId\": \"liqi\"}";
+//        messageData = data.getBytes(StandardCharsets.UTF_8);
+//        buffer = ctx.alloc().buffer();
+//        buffer.writeInt(9003)
+//                .writeInt(1)
+//                .writeInt(4)
+//                .writeInt(10000)
+//                .writeInt(0x0)
+//                .writeInt(imei.length)
+//                .writeInt(messageData.length);
+//        buffer.writeBytes(imei);
+//        buffer.writeBytes(messageData);
+//        ctx.writeAndFlush(buffer);
     }
 }

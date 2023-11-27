@@ -3,6 +3,7 @@ im:
   websocketPort: 19000
   bossThreadSize: 1
   workerThreadSize: 8
+  timeout: 3000
 
   redis:
     mode: single

@@ -13,6 +13,7 @@ public class BootstrapConfig {
         private Integer websocketPort;
         private Integer bossThreadSize;
         private Integer workerThreadSize;
+        private Long timeout;
         private RedisConfig redis;
     }
 

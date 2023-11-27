@@ -8,6 +8,8 @@ public class Constants {
 
     public static final String CLIENT_TYPE = "clientType";
 
+    public static final String LAST_READ_TIME = "lastReadTime";
+
     public static class RedisConstants {
         /**
          * Redis Hash key format: {appId}:userSession:{userId}
