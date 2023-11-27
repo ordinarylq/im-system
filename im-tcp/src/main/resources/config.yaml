@@ -3,3 +3,14 @@ im:
   websocketPort: 19000
   bossThreadSize: 1
   workerThreadSize: 8
+
+  redis:
+    mode: single
+    database: 0
+    password: 123456
+    timeout: 3000
+    poolMinIdle: 8
+    poolConnTimeout: 3000
+    poolSize: 10
+    single:
+      address: 192.168.145.128:6379

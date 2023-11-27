@@ -1,6 +1,7 @@
 package com.lq.im.tcp;
 
 import com.lq.im.codec.config.BootstrapConfig;
+import com.lq.im.tcp.redis.RedisManager;
 import com.lq.im.tcp.server.ImServer;
 import com.lq.im.tcp.server.ImWebSocketServer;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class Starter {
             BootstrapConfig bootstrapConfig = yaml.loadAs(fis, BootstrapConfig.class);
             new ImServer(bootstrapConfig.getIm()).start();
             new ImWebSocketServer(bootstrapConfig.getIm()).start();
+            RedisManager.init(bootstrapConfig);
         } catch (IOException e) {
             log.error("Starting server failed.", e);
             System.exit(-1);
