@@ -20,6 +20,8 @@
     <modules>
         <module>im-common</module>
         <module>im-service</module>
+        <module>im-tcp</module>
+        <module>im-codec</module>
     </modules>
 
     <properties>
@@ -38,7 +40,7 @@
         <apache.commons.version>3.12.0</apache.commons.version>
         <fastjson.version>1.2.51</fastjson.version>
         <springboot.version>2.3.2.RELEASE</springboot.version>
-        <netty.version>4.1.35.Final</netty.version>
+        <netty.version>4.1.101.Final</netty.version>
         <feign.version>8.18.0</feign.version>
     </properties>
 

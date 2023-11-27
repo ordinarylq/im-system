@@ -1,0 +1,5 @@
+im:
+  tcpPort: 9000
+  websocketPort: 19000
+  bossThreadSize: 1
+  workerThreadSize: 8
