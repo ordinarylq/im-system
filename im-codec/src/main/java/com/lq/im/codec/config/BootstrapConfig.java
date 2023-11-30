@@ -9,10 +9,16 @@ public class BootstrapConfig {
 
     @Data
     public static class TcpConfig {
+        /**
+         * 服务端监听端口
+         */
         private Integer tcpPort;
         private Integer websocketPort;
         private Integer bossThreadSize;
         private Integer workerThreadSize;
+        /**
+         * 客户端超时时间(ms)
+         */
         private Long timeout;
         private RedisConfig redis;
     }

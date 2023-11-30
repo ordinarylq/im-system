@@ -3,7 +3,7 @@ package com.lq.im.tcp.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.lq.im.codec.pack.LoginPack;
+import com.lq.im.codec.body.LoginMessageBody;
 import com.lq.im.codec.proto.Message;
 import com.lq.im.codec.proto.MessageHeader;
 import com.lq.im.common.constant.Constants;
@@ -41,14 +41,14 @@ public class SessionSocketHolder {
 
     public static void login(NioSocketChannel channel, Message msg) {
         MessageHeader header = msg.getHeader();
-        LoginPack loginPack = JSON.parseObject(JSONObject.toJSONString(msg.getBody()),
-                new TypeReference<LoginPack>() {}.getType());
+        LoginMessageBody loginMessageBody = JSON.parseObject(JSONObject.toJSONString(msg.getBody()),
+                new TypeReference<LoginMessageBody>() {}.getType());
         setChannelAttribute(channel, Constants.APP_ID, header.getAppId());
         setChannelAttribute(channel, Constants.CLIENT_TYPE, header.getClientType());
-        setChannelAttribute(channel, Constants.USER_ID, loginPack.getUserId());
+        setChannelAttribute(channel, Constants.USER_ID, loginMessageBody.getUserId());
         setChannelAttribute(channel, Constants.LAST_READ_TIME, System.currentTimeMillis());
-        addSessionToRedis(loginPack, header);
-        SessionSocketHolder.put(header.getAppId(), header.getClientType(), loginPack.getUserId(), channel);
+        addSessionToRedis(loginMessageBody, header);
+        SessionSocketHolder.put(header.getAppId(), header.getClientType(), loginMessageBody.getUserId(), channel);
 
     }
 
@@ -87,11 +87,11 @@ public class SessionSocketHolder {
         return (T) channel.attr(AttributeKey.valueOf(key)).get();
     }
 
-    private static void addSessionToRedis(LoginPack loginPack, MessageHeader header) {
-        UserSession userSession = new UserSession(loginPack.getUserId(), header.getAppId(), header.getClientType(), header.getVersion(),
+    private static void addSessionToRedis(LoginMessageBody loginMessageBody, MessageHeader header) {
+        UserSession userSession = new UserSession(loginMessageBody.getUserId(), header.getAppId(), header.getClientType(), header.getVersion(),
                 ImConnecStatusEnum.ONLINE_STATUS.getCode());
         RedissonClient redissonClient = RedisManager.getRedissonClient();
-        String hashKey = header.getAppId() + Constants.RedisConstants.USER_SESSION + loginPack.getUserId();
+        String hashKey = header.getAppId() + Constants.RedisConstants.USER_SESSION + loginMessageBody.getUserId();
         RMap<String, String> map = redissonClient.getMap(hashKey);
         map.put(String.valueOf(header.getClientType()), JSONObject.toJSONString(userSession));
     }

@@ -14,10 +14,10 @@ import java.util.Arrays;
 @Slf4j
 public class Starter {
     /*
-    1.请求头：指令 版本 clientType 消息类型 IMEI长度 appId bodyLen
-    字节数：   04   4     4          4       4        4     4
-    共28字节
-    2. IMEI号
+    私有协议格式：
+    1.请求头(28B)：指令 版本 clientType 消息类型 IMEI长度 appId bodyLen
+    字节数：       4    4     4          4       4        4     4
+    2.IMEI号
     3.请求体：json or protobuf
      */
     public static void main(String[] args) {
