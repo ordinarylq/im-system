@@ -1,4 +1,4 @@
-package com.lq.im.common.enums;
+package com.lq.im.common.enums.friendship;
 
 import com.lq.im.common.exception.ApplicationExceptionEnum;
 

@@ -1,4 +1,4 @@
-package com.lq.im.common.enums;
+package com.lq.im.common.enums.group;
 
 public enum GroupTypeEnum {
     PRIVATE(1),

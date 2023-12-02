@@ -1,11 +1,5 @@
-package com.lq.im.common.enums;
+package com.lq.im.common.enums.group;
 
-/**
- * @ClassName: GroupMuteTypeEnum
- * @Author: LiQi
- * @Date: 2023-06-01 14:48
- * @Version: V1.0
- */
 public enum GroupMuteTypeEnum {
     /**
      * 未开启全员禁言

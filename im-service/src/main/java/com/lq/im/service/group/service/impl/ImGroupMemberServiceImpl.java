@@ -2,9 +2,9 @@ package com.lq.im.service.group.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
-import com.lq.im.common.enums.GroupErrorCodeEnum;
-import com.lq.im.common.enums.GroupMemberRoleEnum;
-import com.lq.im.common.enums.GroupTypeEnum;
+import com.lq.im.common.enums.group.GroupErrorCodeEnum;
+import com.lq.im.common.enums.group.GroupMemberRoleEnum;
+import com.lq.im.common.enums.group.GroupTypeEnum;
 import com.lq.im.service.group.mapper.ImGroupMemberMapper;
 import com.lq.im.service.group.model.ImGroupDAO;
 import com.lq.im.service.group.model.ImGroupMemberDAO;

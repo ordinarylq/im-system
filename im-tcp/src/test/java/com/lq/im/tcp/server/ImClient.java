@@ -21,6 +21,7 @@ public class ImClient {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
+                            ch.pipeline().addLast(new ImClientDecoder());
                             ch.pipeline().addLast(new ImClientHandler());
                         }
                     });

@@ -1,4 +1,4 @@
-package com.lq.im.common.enums;
+package com.lq.im.common.enums.friendship;
 
 public enum AddFriendshipEnum {
     NO_NEED_TO_CONFIRM(1),

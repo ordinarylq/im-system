@@ -1,7 +1,7 @@
 package com.lq.im.tcp.server.handler;
 
 import com.lq.im.common.constant.Constants;
-import com.lq.im.tcp.utils.SessionSocketHolder;
+import com.lq.im.tcp.utils.SessionHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -32,7 +32,7 @@ public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
                     Long lastReadTime = (Long) ctx.channel().attr(AttributeKey.valueOf(Constants.LAST_READ_TIME)).get();
                     long currentTime = System.currentTimeMillis();
                     if (lastReadTime != null && currentTime - lastReadTime > timeout) {
-                        SessionSocketHolder.offline((NioSocketChannel) ctx.channel());
+                        SessionHandler.offline((NioSocketChannel) ctx.channel());
                     }
                     break;
                 default:

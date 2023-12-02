@@ -9,9 +9,6 @@ public class BootstrapConfig {
 
     @Data
     public static class TcpConfig {
-        /**
-         * 服务端监听端口
-         */
         private Integer tcpPort;
         private Integer websocketPort;
         private Integer bossThreadSize;
@@ -20,8 +17,23 @@ public class BootstrapConfig {
          * 客户端超时时间(ms)
          */
         private Long timeout;
+        /**
+         * IM集群节点id
+         */
+        private Integer brokerId;
+        /**
+         * 多端登录模式
+         * 移动端（Android, iPhone, iPad）,桌面端（Windows, Mac）, Web端
+         * 1-单平台登录。仅允许单端登录。
+         * 2-双平台登录。移动端或桌面端、Web端。
+         * 3-三平台登录。移动端、桌面端、web端。
+         * 4-多平台登录。三端可同时在线。
+         */
+        private Integer loginMode;
+
         private RedisConfig redis;
         private RabbitMQConfig rabbitmq;
+        private ZooKeeperConfig zooKeeper;
     }
 
     @Data
@@ -78,6 +90,7 @@ public class BootstrapConfig {
         private String virtualHost;
     }
 
+    @Data
     public static class ZooKeeperConfig {
         private String host;
         private Integer connectTimeout;

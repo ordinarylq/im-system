@@ -2,8 +2,8 @@ package com.lq.im.service.friendship.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
-import com.lq.im.common.enums.FriendShipErrorCodeEnum;
-import com.lq.im.common.enums.UserErrorCodeEnum;
+import com.lq.im.common.enums.friendship.FriendShipErrorCodeEnum;
+import com.lq.im.common.enums.user.UserErrorCodeEnum;
 import com.lq.im.service.friendship.mapper.ImFriendshipGroupMemberMapper;
 import com.lq.im.service.friendship.model.ImFriendshipGroupDAO;
 import com.lq.im.service.friendship.model.ImFriendshipGroupMemberDAO;

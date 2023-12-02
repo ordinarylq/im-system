@@ -1,4 +1,4 @@
-package com.lq.im.tcp.mq.publish;
+package com.lq.im.tcp.mq.producer;
 
 import com.alibaba.fastjson.JSONObject;
 import com.lq.im.tcp.mq.MQChannelFactory;

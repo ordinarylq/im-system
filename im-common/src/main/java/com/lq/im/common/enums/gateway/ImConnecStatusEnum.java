@@ -1,4 +1,4 @@
-package com.lq.im.common.enums;
+package com.lq.im.common.enums.gateway;
 
 public enum ImConnecStatusEnum {
     ONLINE_STATUS(1),

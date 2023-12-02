@@ -2,8 +2,8 @@ package com.lq.im.service.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
-import com.lq.im.common.enums.DelFlagEnum;
-import com.lq.im.common.enums.UserErrorCodeEnum;
+import com.lq.im.common.enums.user.DelFlagEnum;
+import com.lq.im.common.enums.user.UserErrorCodeEnum;
 import com.lq.im.service.user.mapper.ImUserMapper;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.model.req.*;

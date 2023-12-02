@@ -1,8 +1,9 @@
 package com.lq.im.tcp;
 
 import com.lq.im.codec.config.BootstrapConfig;
-import com.lq.im.tcp.mq.subscribe.MessageConsumer;
+import com.lq.im.tcp.mq.consumer.MessageConsumer;
 import com.lq.im.tcp.redis.RedisManager;
+import com.lq.im.tcp.zookeeper.ZkConfig;
 import com.lq.im.tcp.server.ImServer;
 import com.lq.im.tcp.server.ImWebSocketServer;
 import com.lq.im.tcp.mq.MQChannelFactory;
@@ -17,7 +18,7 @@ import java.util.Arrays;
 public class Starter {
     /*
     私有协议格式：
-    1.请求头(28B)：指令 版本 clientType 消息类型 IMEI长度 appId bodyLen
+    1.请求头(28B)：指令 版本 clientType appId 消息类型 IMEI长度 bodyLen
     字节数：       4    4     4          4       4        4     4
     2.IMEI号
     3.请求体：json or protobuf
@@ -37,7 +38,8 @@ public class Starter {
             new ImWebSocketServer(bootstrapConfig.getIm()).start();
             RedisManager.init(bootstrapConfig);
             MQChannelFactory.init(bootstrapConfig.getIm().getRabbitmq());
-            MessageConsumer.init();
+            MessageConsumer.init(bootstrapConfig.getIm().getBrokerId());
+            new ZkConfig(bootstrapConfig).init();
         } catch (IOException e) {
             log.error("Starting server failed.", e);
             System.exit(-1);

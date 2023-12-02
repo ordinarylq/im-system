@@ -1,4 +1,4 @@
-package com.lq.im.common.enums;
+package com.lq.im.common.enums.gateway;
 
 import com.lq.im.common.enums.command.Command;
 
@@ -8,6 +8,12 @@ public enum SystemCommand implements Command {
      * 0D9000
      */
     LOGIN(0x2328),
+
+    /**
+     * 多端登录时客户端被挤下线 0D9002
+     */
+    OFFLINE_NOTIFICATION(0x232A),
+
     /**
      * 退出登录
      * 0D9003

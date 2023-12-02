@@ -1,11 +1,11 @@
 im:
-  tcpPort: 9000
-  websocketPort: 19000
+  tcpPort: 9001
+  websocketPort: 19001
   bossThreadSize: 1
   workerThreadSize: 8
   timeout: 3000
-  brokerId: 1000
-  loginMode: 3
+  brokerId: 1001
+  loginMode: 1
 
   redis:
     mode: single

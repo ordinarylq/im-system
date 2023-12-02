@@ -1,6 +1,6 @@
 package com.lq.im.service.friendship.model.req;
 
-import com.lq.im.common.enums.FriendshipStatusEnum;
+import com.lq.im.common.enums.friendship.FriendshipStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

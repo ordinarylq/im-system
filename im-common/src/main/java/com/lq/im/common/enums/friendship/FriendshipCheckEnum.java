@@ -1,11 +1,5 @@
-package com.lq.im.common.enums;
+package com.lq.im.common.enums.friendship;
 
-/**
- * @ClassName: FriendshipCheckEnum
- * @Author: LiQi
- * @Date: 2023-04-18 10:11
- * @Version: V1.0
- */
 public enum FriendshipCheckEnum {
     SINGLE(1),
     BOTH(2)
