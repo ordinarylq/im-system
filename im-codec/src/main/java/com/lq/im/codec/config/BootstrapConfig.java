@@ -21,6 +21,7 @@ public class BootstrapConfig {
          */
         private Long timeout;
         private RedisConfig redis;
+        private RabbitMQConfig rabbitmq;
     }
 
     @Data
@@ -66,6 +67,20 @@ public class BootstrapConfig {
          * 地址:端口号
          */
         private String address;
+    }
+
+    @Data
+    public static class RabbitMQConfig {
+        private String host;
+        private Integer port;
+        private String username;
+        private String password;
+        private String virtualHost;
+    }
+
+    public static class ZooKeeperConfig {
+        private String host;
+        private Integer connectTimeout;
     }
 
 }
