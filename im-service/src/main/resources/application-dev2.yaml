@@ -4,3 +4,8 @@ spring:
     url: jdbc:mysql://localhost:3306/im-core?serverTimezone=GMT%2B8&useSSL=false&characterEncoding=UTF8
     username: root
     password: 123456
+
+
+zookeeper:
+  host: 192.168.145.128:2181
+  connectTimeout: 5000
