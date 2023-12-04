@@ -6,7 +6,6 @@ import com.lq.im.service.user.service.ImUserService;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -44,10 +43,5 @@ public class ImUserController {
         return this.imUserService.modifyUserInfo(req);
     }
 
-    @RequestMapping("/login")
-    public ResponseVO<?> login(@RequestBody LoginReq req, @RequestParam("app-id") Integer appId) {
-        req.setAppId(appId);
-        // todo 校验登录逻辑
-        return this.imUserService.login(req);
-    }
+
 }
