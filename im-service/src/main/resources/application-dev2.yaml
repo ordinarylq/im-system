@@ -6,6 +6,7 @@ spring:
     password: 123456
 
 
-zookeeper:
-  host: 192.168.145.128:2181
-  connectTimeout: 5000
+router:
+  zkHost: 192.168.145.128:2181
+  zkConnectTimeout: 5000
+

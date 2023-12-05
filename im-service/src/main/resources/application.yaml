@@ -16,3 +16,7 @@ mybatis-plus:
   global-config:
     db-config:
       update-strategy: NOT_EMPTY
+
+router:
+  routeStrategy: 0
+  hashingStrategy: 1
