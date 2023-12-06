@@ -1,13 +1,19 @@
 package com.lq.im.service.group.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.constant.Constants;
 import com.lq.im.common.enums.group.GroupErrorCodeEnum;
 import com.lq.im.common.enums.group.GroupMemberRoleEnum;
 import com.lq.im.common.enums.group.GroupTypeEnum;
+import com.lq.im.service.callback.config.HttpClientProperties;
+import com.lq.im.service.callback.service.CallbackService;
 import com.lq.im.service.group.mapper.ImGroupMemberMapper;
 import com.lq.im.service.group.model.ImGroupDAO;
 import com.lq.im.service.group.model.ImGroupMemberDAO;
+import com.lq.im.service.group.model.callback.AfterAddChatGroupMemberCallbackDTO;
 import com.lq.im.service.group.model.req.*;
 import com.lq.im.service.group.model.resp.ImportGroupMemberResp;
 import com.lq.im.service.group.model.resp.InviteUserResp;
@@ -34,15 +40,16 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
 
     @Resource
     private ImGroupMemberMapper imGroupMemberMapper;
-
     @Resource
     private ImGroupService imGroupService;
-
     @Resource
     private ImGroupMemberService imGroupMemberService;
-
     @Resource
     private ImUserService imUserService;
+    @Resource
+    private HttpClientProperties httpClientProperties;
+    @Resource
+    private CallbackService callbackService;
 
     @Override
     @Transactional
@@ -88,6 +95,7 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
                 return ResponseVO.errorResponse(GroupErrorCodeEnum.GROUP_ALREADY_HAS_OWNER);
             }
         }
+
         QueryWrapper<ImGroupMemberDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("app_id", appId)
                 .eq("group_id", groupId)
@@ -122,6 +130,14 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         ResponseVO<ImGroupDAO> response = this.imGroupService.getGroup(req.getAppId(), req.getGroupId());
         if (!response.isOk()) {
             return response;
+        }
+        if (this.httpClientProperties.isBeforeAddChatGroupMember()) {
+            ResponseVO<?> responseVO = this.callbackService.beforeCallback(req.getAppId(), Constants.CallbackCommand.BEFORE_ADD_CHAT_GROUP_MEMBER,
+                    JSONObject.toJSONString(req));
+            if (!response.isOk()) {
+                return responseVO;
+            }
+            req.setInviteeIdList(JSONArray.parseArray(JSONObject.toJSONString(responseVO.getData()), String.class));
         }
         ImGroupDAO groupInfo = response.getData();
         boolean isAdmin = false;
@@ -160,6 +176,12 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
                 resp.getFailMemberItemList().add(
                         new ImportGroupMemberResp.ResultItem(userId, responseVO != null ? responseVO.getMsg() : ""));
             }
+        }
+        if (this.httpClientProperties.isAfterAddChatGroupMember()) {
+            AfterAddChatGroupMemberCallbackDTO callbackDTO = new AfterAddChatGroupMemberCallbackDTO(
+                    req.getGroupId(), groupInfo.getGroupType(), req.getOperator(), resp);
+            this.callbackService.afterCallback(req.getAppId(), Constants.CallbackCommand.AFTER_ADD_CHAT_GROUP_MEMBER,
+                    JSONObject.toJSONString(callbackDTO));
         }
         return ResponseVO.successResponse(resp);
     }
@@ -229,6 +251,10 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         ResponseVO<?> responseVO = this.imGroupMemberService.leaveGroup(req.getAppId(), req.getGroupId(), req.getMemberId());
         if (!responseVO.isOk()) {
             return responseVO;
+        }
+        if (this.httpClientProperties.isAfterDeleteChatGroupMember()) {
+            this.callbackService.afterCallback(req.getAppId(), Constants.CallbackCommand.AFTER_DELETE_CHAT_GROUP_MEMBER,
+                    JSONObject.toJSONString(req));
         }
         return ResponseVO.successResponse();
     }

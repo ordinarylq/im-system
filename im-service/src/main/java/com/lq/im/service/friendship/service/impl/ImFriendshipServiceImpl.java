@@ -1,13 +1,18 @@
 package com.lq.im.service.friendship.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.constant.Constants.CallbackCommand;
 import com.lq.im.common.enums.friendship.AddFriendshipEnum;
 import com.lq.im.common.enums.friendship.FriendShipErrorCodeEnum;
 import com.lq.im.common.enums.friendship.FriendshipCheckEnum;
 import com.lq.im.common.enums.friendship.FriendshipStatusEnum;
+import com.lq.im.service.callback.config.HttpClientProperties;
+import com.lq.im.service.callback.service.CallbackService;
 import com.lq.im.service.friendship.mapper.ImFriendshipMapper;
+import com.lq.im.service.friendship.model.callback.*;
 import com.lq.im.service.friendship.model.ImFriendshipDAO;
 import com.lq.im.service.friendship.model.req.*;
 import com.lq.im.service.friendship.model.resp.CheckFriendshipResp;
@@ -27,6 +32,8 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.lq.im.common.constant.Constants.CallbackCommand.AFTER_ADD_FRIENDSHIP;
+import static com.lq.im.common.constant.Constants.CallbackCommand.BEFORE_ADD_FRIENDSHIP;
 import static com.lq.im.service.user.service.impl.ImUserServiceImpl.ERROR_MESSAGE;
 
 @SuppressWarnings("DuplicatedCode")
@@ -36,12 +43,14 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
 
     @Resource
     private ImFriendshipMapper imFriendshipMapper;
-
     @Resource
     private ImUserService imUserService;
-
     @Resource
     private ImFriendshipRequestService imFriendshipRequestService;
+    @Resource
+    private HttpClientProperties httpClientProperties;
+    @Resource
+    private CallbackService callbackService;
 
     @Override
     public ResponseVO<?> importFriendship(ImportFriendshipReq req) {
@@ -62,6 +71,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         }
         return ResponseVO.successResponse(resp);
     }
+
     private void addOneFriendship(Integer appId, String userId, FriendInfo friendInfo, ImportFriendshipResp resp) {
         ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
         imFriendshipDAO.setAppId(appId);
@@ -82,6 +92,13 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         ResponseVO<ImUserDAO> friendUserInfo = checkIfTwoUsersExist(req.getAppId(), req.getUserId(), req.getFriendInfo().getFriendUserId());
         if (!friendUserInfo.isOk()) {
             return friendUserInfo;
+        }
+        if (this.httpClientProperties.isBeforeAddFriendship()) {
+            ResponseVO<?> responseVO =
+                    this.callbackService.beforeCallback(req.getAppId(), BEFORE_ADD_FRIENDSHIP, JSONObject.toJSONString(req));
+            if (!responseVO.isOk()) {
+                return responseVO;
+            }
         }
         // 2. 添加
         if(Objects.equals(friendUserInfo.getData().getFriendAllowType(), AddFriendshipEnum.NO_NEED_TO_CONFIRM.getCode())) {
@@ -131,6 +148,10 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         ResponseVO<?> responseVO1 = addFriendOneWay(friendInfo.getFriendUserId(), anotherFriendInfo, appId);
         if (responseVO1 != null) {
             return responseVO1;
+        }
+        if (this.httpClientProperties.isAfterAddFriendship()) {
+            AddFriendAfterCallbackDTO callbackDTO = new AddFriendAfterCallbackDTO(userId, friendInfo);
+            this.callbackService.afterCallback(appId, AFTER_ADD_FRIENDSHIP, JSONObject.toJSONString(callbackDTO));
         }
         return ResponseVO.successResponse();
     }
@@ -202,6 +223,11 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         if(updateResult != 1) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.UPDATE_FRIENDSHIP_ERROR);
         }
+        if (this.httpClientProperties.isAfterModifyFriendship()) {
+            ModifyFriendshipAfterCallbackDTO callbackDTO = new ModifyFriendshipAfterCallbackDTO(userId, friendInfo);
+            this.callbackService.afterCallback(appId, CallbackCommand.AFTER_MODIFY_FRIENDSHIP,
+                    JSONObject.toJSONString(callbackDTO));
+        }
         return ResponseVO.successResponse();
     }
 
@@ -234,6 +260,11 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             }
         } else {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_IS_DELETED);
+        }
+        if (this.httpClientProperties.isAfterDeleteFriendship()) {
+            DeleteFriendAfterCallbackDTO callbackDTO = new DeleteFriendAfterCallbackDTO(req.getUserId(), req.getFriendUserId());
+            this.callbackService.afterCallback(req.getAppId(), CallbackCommand.AFTER_DELETE_FRIENDSHIP,
+                    JSONObject.toJSONString(callbackDTO));
         }
         return ResponseVO.successResponse();
     }
@@ -395,6 +426,11 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.BLOCK_FRIEND_ERROR);
         }
+        if (this.httpClientProperties.isAfterBlockFriend()) {
+            BlockFriendAfterCallbackDTO callbackDTO = new BlockFriendAfterCallbackDTO(req.getUserId(), req.getFriendUserId());
+            this.callbackService.afterCallback(req.getAppId(), CallbackCommand.AFTER_BLOCK_FRIEND,
+                    JSONObject.toJSONString(callbackDTO));
+        }
         return ResponseVO.successResponse();
     }
 
@@ -419,6 +455,11 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         int updateResult = this.imFriendshipMapper.update(imFriendshipDAO1, queryWrapper);
         if(updateResult != 1) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.DELETE_BLOCK_LIST_FAIL);
+        }
+        if (this.httpClientProperties.isAfterUnblockFriend()) {
+            UnBlockFriendAfterCallbackDTO callbackDTO = new UnBlockFriendAfterCallbackDTO(req.getUserId(), req.getFriendUserId());
+            this.callbackService.afterCallback(req.getAppId(), CallbackCommand.AFTER_UNBLOCK_FRIEND,
+                    JSONObject.toJSONString(callbackDTO));
         }
         return ResponseVO.successResponse();
     }

@@ -1,4 +1,4 @@
-package com.lq.im.service.router.zookeeper;
+package com.lq.im.service.router.config;
 
 import com.lq.im.common.enums.gateway.ImServerRouteHashingMethod;
 import com.lq.im.common.enums.gateway.ImServerRouteMethod;

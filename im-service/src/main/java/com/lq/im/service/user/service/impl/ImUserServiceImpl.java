@@ -1,9 +1,12 @@
 package com.lq.im.service.user.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.user.DelFlagEnum;
 import com.lq.im.common.enums.user.UserErrorCodeEnum;
+import com.lq.im.service.callback.config.HttpClientProperties;
+import com.lq.im.service.callback.service.CallbackService;
 import com.lq.im.service.user.mapper.ImUserMapper;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.model.req.*;
@@ -19,6 +22,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.lq.im.common.constant.Constants.CallbackCommand.AFTER_USER_INFO_MODIFIED;
+
 @Slf4j
 @Service
 public class ImUserServiceImpl implements ImUserService {
@@ -26,6 +31,10 @@ public class ImUserServiceImpl implements ImUserService {
 
     @Resource
     private ImUserMapper imUserMapper;
+    @Resource
+    private HttpClientProperties httpClientProperties;
+    @Resource
+    private CallbackService callbackService;
 
     @Override
     public ResponseVO<?> importUser(ImportUserReq req) {
@@ -141,7 +150,9 @@ public class ImUserServiceImpl implements ImUserService {
         if (updateResult != 1) {
             return ResponseVO.errorResponse(UserErrorCodeEnum.MODIFY_USER_ERROR);
         }
-        // todo 发送更新后的用户信息到客户端
+        if (this.httpClientProperties.isAfterUserInfoModified()) {
+            this.callbackService.afterCallback(req.getAppId(), AFTER_USER_INFO_MODIFIED, JSONObject.toJSONString(req));
+        }
         return ResponseVO.successResponse();
     }
 

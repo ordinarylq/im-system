@@ -1,16 +1,21 @@
 package com.lq.im.service.group.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.constant.Constants.CallbackCommand;
 import com.lq.im.common.enums.group.GroupErrorCodeEnum;
 import com.lq.im.common.enums.group.GroupMemberRoleEnum;
 import com.lq.im.common.enums.group.GroupStatusEnum;
 import com.lq.im.common.enums.group.GroupTypeEnum;
+import com.lq.im.service.callback.config.HttpClientProperties;
+import com.lq.im.service.callback.service.CallbackService;
 import com.lq.im.service.group.mapper.ImGroupMapper;
 import com.lq.im.service.group.model.ImGroupDAO;
 import com.lq.im.service.group.model.ImGroupMemberDAO;
+import com.lq.im.service.group.model.callback.AfterDismissChatGroupCallbackDTO;
 import com.lq.im.service.group.model.req.*;
 import com.lq.im.service.group.model.resp.GetGroupWithMemberListResp;
 import com.lq.im.service.group.service.ImGroupMemberService;
@@ -36,12 +41,14 @@ public class ImGroupServiceImpl implements ImGroupService {
 
     @Resource
     private ImGroupMemberService imGroupMemberService;
-
     @Resource
     private ImUserService imUserService;
-
     @Resource
     private ImGroupMapper imGroupMapper;
+    @Resource
+    private HttpClientProperties httpClientProperties;
+    @Resource
+    private CallbackService callbackService;
 
     @Override
     @Transactional
@@ -118,6 +125,10 @@ public class ImGroupServiceImpl implements ImGroupService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.CREATE_GROUP_ERROR);
         }
+        if (this.httpClientProperties.isAfterCreateChatGroup()) {
+            this.callbackService.afterCallback(req.getAppId(), CallbackCommand.AFTER_CREATE_CHAT_GROUP,
+                    JSONObject.toJSONString(groupDAO));
+        }
         return ResponseVO.successResponse();
     }
 
@@ -158,8 +169,9 @@ public class ImGroupServiceImpl implements ImGroupService {
         BeanUtils.copyProperties(req, groupDAO);
         groupDAO.setStatus(GroupStatusEnum.NORMAL.getCode());
         groupDAO.setUpdateTime(System.currentTimeMillis());
+        QueryWrapper<ImGroupDAO> wrapper;
         try {
-            QueryWrapper<ImGroupDAO> wrapper = new QueryWrapper<>();
+            wrapper = new QueryWrapper<>();
             wrapper.eq("app_id", groupDAO.getAppId())
                     .eq("group_id", groupDAO.getGroupId());
             int updateResult = this.imGroupMapper.update(groupDAO, wrapper);
@@ -169,6 +181,10 @@ public class ImGroupServiceImpl implements ImGroupService {
         } catch (Exception e) {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
+        }
+        if (this.httpClientProperties.isAfterModifyChatGroup()) {
+            this.callbackService.beforeCallback(req.getAppId(), CallbackCommand.AFTER_MODIFY_CHAT_GROUP,
+                    JSONObject.toJSONString(this.imGroupMapper.selectOne(wrapper)));
         }
         return ResponseVO.successResponse();
     }
@@ -258,6 +274,10 @@ public class ImGroupServiceImpl implements ImGroupService {
         } catch (Exception e) {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.DISMISS_GROUP_ERROR);
+        }
+        if (this.httpClientProperties.isAfterDismissChatGroup()) {
+            this.callbackService.beforeCallback(req.getAppId(), CallbackCommand.AFTER_DISMISS_CHAT_GROUP,
+                    JSONObject.toJSONString(new AfterDismissChatGroupCallbackDTO(req.getGroupId())));
         }
         return ResponseVO.successResponse();
     }

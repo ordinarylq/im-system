@@ -1,4 +1,4 @@
-package com.lq.im.service.router.zookeeper;
+package com.lq.im.service.router.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

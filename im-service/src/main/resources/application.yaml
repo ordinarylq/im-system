@@ -20,3 +20,26 @@ mybatis-plus:
 router:
   routeStrategy: 0
   hashingStrategy: 1
+
+httpclient:
+  maxTotal: 100
+  defaultMaxPerRoute: 50
+  connectTimeout: 2000
+  socketTimeout: 5000
+  checkStaleConnection: true
+
+  callbackUrl: "http://127.0.0.1:8001/callback"
+  afterUserInfoModified: true
+  beforeAddFriendship: true
+  afterAddFriendship: true
+  afterModifyFriendship: true
+  afterDeleteFriendship: true
+  afterBlockFriend: true
+  afterUnblockFriend: true
+  afterCreateChatGroup: true
+  afterModifyChatGroup: true
+  afterDismissChatGroup: true
+  afterDeleteChatGroupMember: true
+  beforeAddChatGroupMember: true
+  afterAddChatGroupMember: true
+  

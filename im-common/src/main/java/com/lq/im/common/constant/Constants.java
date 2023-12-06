@@ -51,4 +51,21 @@ public class Constants {
         public static final String WEB_NODE = "/web";
     }
 
+    public static class CallbackCommand {
+        public static final String AFTER_USER_INFO_MODIFIED = "user.modify.after";
+        public static final String BEFORE_ADD_FRIENDSHIP = "friendship.add.before";
+        public static final String AFTER_ADD_FRIENDSHIP = "friendship.add.after";
+        public static final String AFTER_MODIFY_FRIENDSHIP = "friendship.modify.after";
+        public static final String AFTER_DELETE_FRIENDSHIP = "friendship.delete.after";
+        public static final String AFTER_BLOCK_FRIEND = "friendship.block.after";
+        public static final String AFTER_UNBLOCK_FRIEND = "friendship.unblock.after";
+        public static final String AFTER_CREATE_CHAT_GROUP = "group.create.after";
+        public static final String AFTER_MODIFY_CHAT_GROUP = "group.modify.after";
+        public static final String AFTER_DISMISS_CHAT_GROUP = "group.dismiss.after";
+        public static final String AFTER_DELETE_CHAT_GROUP_MEMBER = "group.member.delete.after";
+        public static final String BEFORE_ADD_CHAT_GROUP_MEMBER = "group.member.add.before";
+        public static final String AFTER_ADD_CHAT_GROUP_MEMBER = "group.member.add.after";
+
+    }
+
 }

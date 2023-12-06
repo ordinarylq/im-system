@@ -1,4 +1,4 @@
-package com.lq.im.service.router.zookeeper;
+package com.lq.im.service.router.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.I0Itec.zkclient.ZkClient;

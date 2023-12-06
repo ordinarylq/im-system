@@ -5,7 +5,7 @@ import com.lq.im.common.enums.gateway.LoginDeviceType;
 import com.lq.im.service.router.handler.RouteHandler;
 import com.lq.im.service.router.handler.ServerInfo;
 import com.lq.im.service.router.service.ServerRouteService;
-import com.lq.im.service.router.zookeeper.ZKClientUtils;
+import com.lq.im.service.router.config.ZKClientUtils;
 import com.lq.im.service.user.model.req.LoginReq;
 import com.lq.im.service.user.service.ImUserService;
 import org.springframework.stereotype.Service;
