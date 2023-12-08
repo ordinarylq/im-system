@@ -41,7 +41,7 @@ public class RedisManager {
             throw new RuntimeException(e);
         }
         UserSession userSession = new UserSession(loginMessageBody.getUserId(), header.getAppId(), header.getClientType(), header.getVersion(),
-                ImConnecStatusEnum.ONLINE_STATUS.getCode(), brokerId, localHostAddress);
+                ImConnecStatusEnum.ONLINE_STATUS.getCode(), brokerId, localHostAddress, header.getImei());
         String hashKey = header.getAppId() + Constants.RedisConstants.USER_SESSION + loginMessageBody.getUserId();
         RMap<String, String> map = redissonClient.getMap(hashKey);
         map.put(header.getClientType() + ":" + header.getImei(), JSONObject.toJSONString(userSession));

@@ -13,4 +13,8 @@ public class RequestBase {
      * 操作人
      */
     private String operator;
+
+    private Integer clientType;
+
+    private String imei;
 }

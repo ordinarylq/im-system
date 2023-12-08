@@ -42,4 +42,9 @@ public class UserSession {
      * IM集群节点IP地址
      */
     private String brokerHostAddress;
+
+    /**
+     * 设备唯一编号
+     */
+    private String imei;
 }

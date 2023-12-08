@@ -2,19 +2,21 @@ package com.lq.im.service.friendship.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
-import com.lq.im.common.enums.friendship.ApproveFriendRequestStatusEnum;
-import com.lq.im.common.enums.friendship.FriendShipErrorCodeEnum;
-import com.lq.im.common.enums.friendship.FriendshipStatusEnum;
-import com.lq.im.common.enums.friendship.ReadFriendshipRequestEnum;
+import com.lq.im.common.enums.friendship.*;
+import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.service.friendship.mapper.ImFriendshipRequestMapper;
 import com.lq.im.service.friendship.model.ImFriendshipRequestDAO;
+import com.lq.im.service.friendship.model.message.ApproveFriendshipRequestDTO;
+import com.lq.im.service.friendship.model.message.ReadFriendshipRequestDTO;
 import com.lq.im.service.friendship.model.req.ApproveFriendRequestReq;
 import com.lq.im.service.friendship.model.req.FriendInfo;
 import com.lq.im.service.friendship.model.req.GetAllFriendshipRequestReq;
 import com.lq.im.service.friendship.model.req.ReadFriendshipRequestReq;
 import com.lq.im.service.friendship.service.ImFriendshipRequestService;
 import com.lq.im.service.friendship.service.ImFriendshipService;
+import com.lq.im.service.utils.MessageQueueUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -25,9 +27,10 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
 
     @Resource
     private ImFriendshipRequestMapper imFriendshipRequestMapper;
-
     @Resource
     private ImFriendshipService imFriendshipService;
+    @Resource
+    private MessageQueueUtils messageQueueUtils;
 
     @Override
     public ResponseVO<?> addFriendRequest(Integer appId, String userId, FriendInfo friendInfo) {
@@ -62,6 +65,8 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
                     System.currentTimeMillis(), System.currentTimeMillis(), null, friendInfo.getAddSource());
             this.imFriendshipRequestMapper.insert(imFriendshipRequestDAO);
         }
+        this.messageQueueUtils.sendMessageToAllDevicesOfOneUser(appId, friendInfo.getFriendUserId(),
+                FriendshipCommand.ADD_FRIEND_REQUEST, imFriendshipRequestDAO);
         return ResponseVO.successResponse();
     }
 
@@ -97,12 +102,17 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
                     null,
                     imFriendshipRequestDAO.getAddWording());
 
-            ResponseVO<?> responseVO = this.imFriendshipService.doInternalAddFriend(imFriendshipRequestDAO.getUserId(),
-                    friendInfo, req.getAppId());
+            UserClientDTO userClient = new UserClientDTO(req.getAppId(), req.getClientType(), req.getOperator(), req.getImei());
+            ResponseVO<?> responseVO = this.imFriendshipService.doInternalAddFriend(userClient, friendInfo);
             if(!responseVO.isOk() && responseVO.getCode() != FriendShipErrorCodeEnum.OTHER_PERSON_IS_YOUR_FRIEND.getCode()) {
                 return responseVO;
             }
         }
+        ApproveFriendshipRequestDTO approveFriendshipRequestMsg = new ApproveFriendshipRequestDTO();
+        BeanUtils.copyProperties(req, approveFriendshipRequestMsg);
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.APPROVE_FRIEND_REQUEST, approveFriendshipRequestMsg, userClient);
         return ResponseVO.successResponse();
     }
 
@@ -115,6 +125,11 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
         imFriendshipRequestDAO.setReadStatus(ReadFriendshipRequestEnum.HAS_READ.getCode());
         imFriendshipRequestDAO.setUpdateTime(System.currentTimeMillis());
         this.imFriendshipRequestMapper.update(imFriendshipRequestDAO, queryWrapper);
+        ReadFriendshipRequestDTO readFriendshipRequestMsg = new ReadFriendshipRequestDTO();
+        BeanUtils.copyProperties(req, readFriendshipRequestMsg);
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.READ_FRIEND_REQUEST, readFriendshipRequestMsg, userClient);
         return ResponseVO.successResponse();
     }
 

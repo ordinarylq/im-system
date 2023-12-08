@@ -5,15 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.constant.Constants.CallbackCommand;
-import com.lq.im.common.enums.friendship.AddFriendshipEnum;
-import com.lq.im.common.enums.friendship.FriendShipErrorCodeEnum;
-import com.lq.im.common.enums.friendship.FriendshipCheckEnum;
-import com.lq.im.common.enums.friendship.FriendshipStatusEnum;
-import com.lq.im.service.callback.config.HttpClientProperties;
-import com.lq.im.service.callback.service.CallbackService;
+import com.lq.im.common.enums.friendship.*;
+import com.lq.im.common.model.UserClientDTO;
+import com.lq.im.service.config.HttpClientProperties;
+import com.lq.im.service.callback.CallbackService;
 import com.lq.im.service.friendship.mapper.ImFriendshipMapper;
 import com.lq.im.service.friendship.model.callback.*;
 import com.lq.im.service.friendship.model.ImFriendshipDAO;
+import com.lq.im.service.friendship.model.message.*;
 import com.lq.im.service.friendship.model.req.*;
 import com.lq.im.service.friendship.model.resp.CheckFriendshipResp;
 import com.lq.im.service.friendship.model.resp.ImportBlocklistResp;
@@ -22,6 +21,7 @@ import com.lq.im.service.friendship.service.ImFriendshipRequestService;
 import com.lq.im.service.friendship.service.ImFriendshipService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
+import com.lq.im.service.utils.MessageQueueUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -51,6 +51,8 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
     private HttpClientProperties httpClientProperties;
     @Resource
     private CallbackService callbackService;
+    @Resource
+    private MessageQueueUtils messageQueueUtils;
 
     @Override
     public ResponseVO<?> importFriendship(ImportFriendshipReq req) {
@@ -103,7 +105,8 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         // 2. 添加
         if(Objects.equals(friendUserInfo.getData().getFriendAllowType(), AddFriendshipEnum.NO_NEED_TO_CONFIRM.getCode())) {
             // 不需要确认
-            return doInternalAddFriend(req.getUserId(), req.getFriendInfo(), req.getAppId());
+            UserClientDTO userClient = new UserClientDTO(req.getAppId(), req.getClientType(), req.getUserId(), req.getImei());
+            return doInternalAddFriend(userClient, req.getFriendInfo());
         } else {
             // 需要确认
             // 先查是否已经是好友关系了
@@ -135,23 +138,36 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
     }
 
     @Transactional
-    public ResponseVO<?> doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId) {
+    public ResponseVO<?> doInternalAddFriend(UserClientDTO userClient, FriendInfo friendInfo) {
         // a添加b
-        ResponseVO<?> responseVO = addFriendOneWay(userId, friendInfo, appId);
+        ResponseVO<?> responseVO = addFriendOneWay(userClient.getUserId(), friendInfo, userClient.getAppId());
         if (responseVO != null) {
             return responseVO;
         }
         // b添加a
-        FriendInfo anotherFriendInfo = new FriendInfo(userId, null,
+        FriendInfo anotherFriendInfo = new FriendInfo(userClient.getUserId(), null,
                 FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode(), FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode(),
                 friendInfo.getAddSource(), null, null);
-        ResponseVO<?> responseVO1 = addFriendOneWay(friendInfo.getFriendUserId(), anotherFriendInfo, appId);
+        ResponseVO<?> responseVO1 = addFriendOneWay(friendInfo.getFriendUserId(), anotherFriendInfo, userClient.getAppId());
         if (responseVO1 != null) {
             return responseVO1;
         }
+        // 通知a的其他端，b的所有端
+        AddFriendshipDTO addFriendMsg = new AddFriendshipDTO();
+        addFriendMsg.setAppId(userClient.getAppId());
+        addFriendMsg.setUserId(userClient.getUserId());
+        BeanUtils.copyProperties(friendInfo, addFriendMsg);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.ADD_FRIEND, addFriendMsg, userClient);
+        AddFriendshipDTO anotherAddFriendshipMsg = new AddFriendshipDTO();
+        anotherAddFriendshipMsg.setAppId(userClient.getAppId());
+        anotherAddFriendshipMsg.setUserId(friendInfo.getFriendUserId());
+        BeanUtils.copyProperties(anotherFriendInfo, anotherAddFriendshipMsg);
+        this.messageQueueUtils.sendMessageToAllDevicesOfOneUser(userClient.getAppId(), friendInfo.getFriendUserId(),
+                FriendshipCommand.ADD_FRIEND, anotherAddFriendshipMsg);
+        // callback
         if (this.httpClientProperties.isAfterAddFriendship()) {
-            AddFriendAfterCallbackDTO callbackDTO = new AddFriendAfterCallbackDTO(userId, friendInfo);
-            this.callbackService.afterCallback(appId, AFTER_ADD_FRIENDSHIP, JSONObject.toJSONString(callbackDTO));
+            AddFriendAfterCallbackDTO callbackDTO = new AddFriendAfterCallbackDTO(userClient.getUserId(), friendInfo);
+            this.callbackService.afterCallback(userClient.getAppId(), AFTER_ADD_FRIENDSHIP, JSONObject.toJSONString(callbackDTO));
         }
         return ResponseVO.successResponse();
     }
@@ -207,25 +223,32 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         if (!responseVO.isOk()) {
             return responseVO;
         }
-        return doInternalUpdateFriendship(req.getUserId(), req.getFriendInfo(), req.getAppId());
+        UserClientDTO userClient = new UserClientDTO(req.getAppId(), req.getClientType(), req.getUserId(), req.getImei());
+        return doInternalUpdateFriendship(userClient, req.getFriendInfo());
     }
 
     @Transactional
-    public ResponseVO<?> doInternalUpdateFriendship(String userId, FriendInfo friendInfo, Integer appId) {
+    public ResponseVO<?> doInternalUpdateFriendship(UserClientDTO userClient, FriendInfo friendInfo) {
         UpdateWrapper<ImFriendshipDAO> updateWrapper = new UpdateWrapper<>();
         updateWrapper.set(!StringUtils.isEmpty(friendInfo.getRemark()), "remark", friendInfo.getRemark())
                 .set(!StringUtils.isEmpty(friendInfo.getAddSource()), "add_source", friendInfo.getAddSource())
                 .set(!StringUtils.isEmpty(friendInfo.getExtra()), "extra", friendInfo.getExtra())
-                .eq("app_id", appId)
-                .eq("from_id", userId)
+                .eq("app_id", userClient.getAppId())
+                .eq("from_id", userClient.getUserId())
                 .eq("to_id", friendInfo.getFriendUserId());
         int updateResult = this.imFriendshipMapper.update(null, updateWrapper);
         if(updateResult != 1) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.UPDATE_FRIENDSHIP_ERROR);
         }
+        // todo 通知其他端
+        UpdateFriendshipDTO updateFriendshipMsg = new UpdateFriendshipDTO();
+        updateFriendshipMsg.setAppId(userClient.getAppId());
+        updateFriendshipMsg.setUserId(userClient.getUserId());
+        updateFriendshipMsg.setFriendUserId(friendInfo.getFriendUserId());
+        this.messageQueueUtils.sendMessage(FriendshipCommand.UPDATE_FRIEND, updateFriendshipMsg, userClient);
         if (this.httpClientProperties.isAfterModifyFriendship()) {
-            ModifyFriendshipAfterCallbackDTO callbackDTO = new ModifyFriendshipAfterCallbackDTO(userId, friendInfo);
-            this.callbackService.afterCallback(appId, CallbackCommand.AFTER_MODIFY_FRIENDSHIP,
+            ModifyFriendshipAfterCallbackDTO callbackDTO = new ModifyFriendshipAfterCallbackDTO(userClient.getUserId(), friendInfo);
+            this.callbackService.afterCallback(userClient.getAppId(), CallbackCommand.AFTER_MODIFY_FRIENDSHIP,
                     JSONObject.toJSONString(callbackDTO));
         }
         return ResponseVO.successResponse();
@@ -261,6 +284,13 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         } else {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIEND_IS_DELETED);
         }
+        DeleteFriendshipDTO deleteFriendshipMsg = new DeleteFriendshipDTO();
+        deleteFriendshipMsg.setAppId(req.getAppId());
+        deleteFriendshipMsg.setUserId(req.getUserId());
+        deleteFriendshipMsg.setFriendUserId(req.getFriendUserId());
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.DELETE_FRIEND, deleteFriendshipMsg, userClient);
         if (this.httpClientProperties.isAfterDeleteFriendship()) {
             DeleteFriendAfterCallbackDTO callbackDTO = new DeleteFriendAfterCallbackDTO(req.getUserId(), req.getFriendUserId());
             this.callbackService.afterCallback(req.getAppId(), CallbackCommand.AFTER_DELETE_FRIENDSHIP,
@@ -270,15 +300,20 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
     }
 
     @Override
-    public ResponseVO<?> deleteAllFriendship(String userId, Integer appId) {
+    public ResponseVO<?> deleteAllFriendship(DeleteAllFriendshipReq req) {
         QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("app_id", appId)
-                .eq("from_id", userId)
+        queryWrapper.eq("app_id", req.getAppId())
+                .eq("from_id", req.getUserId())
                 .eq("status", FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
 
         ImFriendshipDAO imFriendshipDAO = new ImFriendshipDAO();
         imFriendshipDAO.setStatus(FriendshipStatusEnum.FRIEND_STATUS_DELETE.getCode());
         this.imFriendshipMapper.update(imFriendshipDAO, queryWrapper);
+        DeleteAllFriendshipDTO deleteAllFriendshipMsg = new DeleteAllFriendshipDTO();
+        BeanUtils.copyProperties(req, deleteAllFriendshipMsg);
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.DELETE_FRIEND, deleteAllFriendshipMsg, userClient);
         return ResponseVO.successResponse();
     }
 
@@ -426,6 +461,11 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.BLOCK_FRIEND_ERROR);
         }
+        BlockFriendshipDTO blockFriendshipMsg = new BlockFriendshipDTO();
+        BeanUtils.copyProperties(req, blockFriendshipMsg);
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.BLOCK_FRIEND, blockFriendshipMsg, userClient);
         if (this.httpClientProperties.isAfterBlockFriend()) {
             BlockFriendAfterCallbackDTO callbackDTO = new BlockFriendAfterCallbackDTO(req.getUserId(), req.getFriendUserId());
             this.callbackService.afterCallback(req.getAppId(), CallbackCommand.AFTER_BLOCK_FRIEND,
@@ -456,6 +496,11 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         if(updateResult != 1) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.DELETE_BLOCK_LIST_FAIL);
         }
+        UnblockFriendshipDTO unblockFriendshipMsg = new UnblockFriendshipDTO();
+        BeanUtils.copyProperties(req, unblockFriendshipMsg);
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.UNBLOCK_FRIEND, unblockFriendshipMsg, userClient);
         if (this.httpClientProperties.isAfterUnblockFriend()) {
             UnBlockFriendAfterCallbackDTO callbackDTO = new UnBlockFriendAfterCallbackDTO(req.getUserId(), req.getFriendUserId());
             this.callbackService.afterCallback(req.getAppId(), CallbackCommand.AFTER_UNBLOCK_FRIEND,

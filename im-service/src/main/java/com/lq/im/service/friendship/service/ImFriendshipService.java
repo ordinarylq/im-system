@@ -1,6 +1,7 @@
 package com.lq.im.service.friendship.service;
 
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.service.friendship.model.req.*;
 
 public interface ImFriendshipService {
@@ -20,12 +21,8 @@ public interface ImFriendshipService {
 
     /**
      * 添加好友
-     * @param userId 用户id
-     * @param friendInfo 好友信息
-     * @param appId 应用id
-     * @return 添加结果
      */
-    ResponseVO<?> doInternalAddFriend(String userId, FriendInfo friendInfo, Integer appId);
+    ResponseVO<?> doInternalAddFriend(UserClientDTO userClient, FriendInfo friendInfo);
 
     /**
      * 更新好友关系
@@ -43,11 +40,8 @@ public interface ImFriendshipService {
 
     /**
      * 删除某用户的所有好友
-     * @param userId 用户id
-	 * @param appId 应用id
-     * @return ResponseVO
      */
-    ResponseVO<?> deleteAllFriendship(String userId, Integer appId);
+    ResponseVO<?> deleteAllFriendship(DeleteAllFriendshipReq req);
 
     /**
      * 获取所有的好友关系

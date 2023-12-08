@@ -1,8 +1,8 @@
-package com.lq.im.service.callback.service;
+package com.lq.im.service.callback;
 
 import com.lq.im.common.ResponseVO;
-import com.lq.im.service.callback.config.HttpClientProperties;
-import com.lq.im.service.callback.utils.HttpRequestUtils;
+import com.lq.im.service.config.HttpClientProperties;
+import com.lq.im.service.utils.HttpRequestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

@@ -3,10 +3,14 @@ package com.lq.im.service.friendship.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.friendship.FriendShipErrorCodeEnum;
+import com.lq.im.common.enums.friendship.FriendshipCommand;
 import com.lq.im.common.enums.user.UserErrorCodeEnum;
+import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.service.friendship.mapper.ImFriendshipGroupMemberMapper;
 import com.lq.im.service.friendship.model.ImFriendshipGroupDAO;
 import com.lq.im.service.friendship.model.ImFriendshipGroupMemberDAO;
+import com.lq.im.service.friendship.model.message.AddGroupMemberDTO;
+import com.lq.im.service.friendship.model.message.RemoveGroupMemberDTO;
 import com.lq.im.service.friendship.model.req.AddFriendshipGroupMemberReq;
 import com.lq.im.service.friendship.model.req.RemoveFriendshipGroupMemberReq;
 import com.lq.im.service.friendship.model.resp.AddFriendshipGroupMemberResp;
@@ -15,7 +19,9 @@ import com.lq.im.service.friendship.service.ImFriendshipGroupMemberService;
 import com.lq.im.service.friendship.service.ImFriendshipGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
+import com.lq.im.service.utils.MessageQueueUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -28,12 +34,12 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
 
     @Resource
     private ImFriendshipGroupMemberMapper imFriendshipGroupMemberMapper;
-
     @Resource
     private ImFriendshipGroupService imFriendshipGroupService;
-
     @Resource
     private ImUserService imUserService;
+    @Resource
+    private MessageQueueUtils messageQueueUtils;
 
     @Override
     public Integer addGroupMember(Long groupId, String userId) {
@@ -98,11 +104,19 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
                 resp.getFailUserItemList().add(new AddFriendshipGroupMemberResp.ResultItem(friendUserId, e.getMessage()));
             }
         }
+        AddGroupMemberDTO addGroupMemberMsg = new AddGroupMemberDTO();
+        addGroupMemberMsg.setAppId(req.getAppId());
+        addGroupMemberMsg.setUserId(req.getUserId());
+        addGroupMemberMsg.setGroupName(req.getGroupName());
+        addGroupMemberMsg.setFriendIdList(resp.getSuccessUserIdList());
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.ADD_FRIEND_GROUP_MEMBER, addGroupMemberMsg, userClient);
         return ResponseVO.successResponse(resp);
     }
 
     @Override
-    public ResponseVO removeMultipleMembers(RemoveFriendshipGroupMemberReq req) {
+    public ResponseVO<?> removeMultipleMembers(RemoveFriendshipGroupMemberReq req) {
         // 1. 首先判断用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
         if(singleUserInfo == null || !singleUserInfo.isOk()) {
@@ -143,6 +157,14 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
                 resp.getFailUserItemList().add(new RemoveFriendshipGroupMemberResp.ResultItem(friendUserId, e.getMessage()));
             }
         }
+        RemoveGroupMemberDTO removeGroupMemberMsg = new RemoveGroupMemberDTO();
+        removeGroupMemberMsg.setAppId(req.getAppId());
+        removeGroupMemberMsg.setUserId(req.getUserId());
+        removeGroupMemberMsg.setGroupName(req.getGroupName());
+        removeGroupMemberMsg.setFriendIdList(resp.getSuccessUserIdList());
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.messageQueueUtils.sendMessage(FriendshipCommand.REMOVE_FRIEND_GROUP_MEMBER, removeGroupMemberMsg, userClient);
         return ResponseVO.successResponse(resp);
     }
 }

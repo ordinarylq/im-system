@@ -1,4 +1,4 @@
-package com.lq.im.service.callback.config;
+package com.lq.im.service.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

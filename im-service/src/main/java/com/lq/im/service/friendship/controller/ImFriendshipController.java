@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 
 @RestController
 @RequestMapping("/api/v1/friendship")
@@ -45,9 +44,10 @@ public class ImFriendshipController {
     }
 
     @DeleteMapping("/delete-all")
-    public ResponseVO<?> deleteAllFriendship(@RequestParam("user-id") @NotBlank String userId,
+    public ResponseVO<?> deleteAllFriendship(@RequestBody @Valid DeleteAllFriendshipReq req,
                                           @RequestParam("app-id") Integer appId) {
-        return this.imFriendshipService.deleteAllFriendship(userId, appId);
+        req.setAppId(appId);
+        return this.imFriendshipService.deleteAllFriendship(req);
     }
 
     @PostMapping("/get")

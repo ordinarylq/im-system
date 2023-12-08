@@ -5,14 +5,16 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.user.DelFlagEnum;
 import com.lq.im.common.enums.user.UserErrorCodeEnum;
-import com.lq.im.service.callback.config.HttpClientProperties;
-import com.lq.im.service.callback.service.CallbackService;
+import com.lq.im.common.model.UserClientDTO;
+import com.lq.im.service.config.HttpClientProperties;
+import com.lq.im.service.callback.CallbackService;
 import com.lq.im.service.user.mapper.ImUserMapper;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.model.req.*;
 import com.lq.im.service.user.model.resp.GetUserInfoResp;
 import com.lq.im.service.user.model.resp.ImportUserResp;
 import com.lq.im.service.user.service.ImUserService;
+import com.lq.im.service.utils.MessageQueueUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.lq.im.common.constant.Constants.CallbackCommand.AFTER_USER_INFO_MODIFIED;
+import static com.lq.im.common.enums.user.UserCommand.USER_INFO_MODIFIED;
 
 @Slf4j
 @Service
@@ -35,6 +38,8 @@ public class ImUserServiceImpl implements ImUserService {
     private HttpClientProperties httpClientProperties;
     @Resource
     private CallbackService callbackService;
+    @Resource
+    private MessageQueueUtils messageQueueUtils;
 
     @Override
     public ResponseVO<?> importUser(ImportUserReq req) {
@@ -150,6 +155,8 @@ public class ImUserServiceImpl implements ImUserService {
         if (updateResult != 1) {
             return ResponseVO.errorResponse(UserErrorCodeEnum.MODIFY_USER_ERROR);
         }
+        UserClientDTO userClient = new UserClientDTO(req.getAppId(), req.getClientType(), req.getUserId(), req.getImei());
+        this.messageQueueUtils.sendMessage(USER_INFO_MODIFIED, req, userClient);
         if (this.httpClientProperties.isAfterUserInfoModified()) {
             this.callbackService.afterCallback(req.getAppId(), AFTER_USER_INFO_MODIFIED, JSONObject.toJSONString(req));
         }

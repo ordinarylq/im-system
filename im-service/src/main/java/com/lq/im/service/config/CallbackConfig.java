@@ -1,4 +1,4 @@
-package com.lq.im.service.callback.config;
+package com.lq.im.service.config;
 
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
