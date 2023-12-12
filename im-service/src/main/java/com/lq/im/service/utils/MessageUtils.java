@@ -1,5 +1,6 @@
 package com.lq.im.service.utils;
 
+import com.alibaba.fastjson.JSONObject;
 import com.lq.im.codec.proto.ImServiceMessage;
 import com.lq.im.common.enums.command.Command;
 import com.lq.im.common.model.UserClientDTO;
@@ -15,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.lq.im.common.constant.Constants.MessageQueueConstants.MESSAGE_SERVICE_TO_IM;
+
 @Slf4j
 @Component
 public class MessageUtils {
@@ -24,9 +27,9 @@ public class MessageUtils {
     private UserSessionUtils userSessionUtils;
 
     public boolean sendMessage(UserSession session, Object msg) {
-        String exchangeName = "";
+        String exchangeName = MESSAGE_SERVICE_TO_IM;
         try {
-            this.rabbitTemplate.convertAndSend(exchangeName, String.valueOf(session.getBrokerId()), msg);
+            this.rabbitTemplate.convertAndSend(exchangeName, String.valueOf(session.getBrokerId()), JSONObject.toJSONString(msg));
         } catch (AmqpException e) {
             log.error("Send MQ message error: {}", e.getMessage());
             return false;

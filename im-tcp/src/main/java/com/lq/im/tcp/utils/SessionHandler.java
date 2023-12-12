@@ -30,6 +30,10 @@ public class SessionHandler {
         ).map(Map.Entry::getValue).collect(Collectors.toList());
     }
 
+    public static NioSocketChannel getChannel(UserClientDTO userClientDTO) {
+        return channels.get(userClientDTO);
+    }
+
     public static void login(NioSocketChannel channel, Message msg, Integer brokerId) {
         MessageHeader header = msg.getHeader();
         LoginMessageBody loginMessageBody = JSON.parseObject(

@@ -29,17 +29,17 @@ httpclient:
   checkStaleConnection: true
 
   callbackUrl: "http://127.0.0.1:8001/callback"
-  afterUserInfoModified: true
-  beforeAddFriendship: true
-  afterAddFriendship: true
-  afterModifyFriendship: true
-  afterDeleteFriendship: true
-  afterBlockFriend: true
-  afterUnblockFriend: true
-  afterCreateChatGroup: true
-  afterModifyChatGroup: true
-  afterDismissChatGroup: true
-  afterDeleteChatGroupMember: true
-  beforeAddChatGroupMember: true
-  afterAddChatGroupMember: true
+  afterUserInfoModified: false
+  beforeAddFriendship: false
+  afterAddFriendship: false
+  afterModifyFriendship: false
+  afterDeleteFriendship: false
+  afterBlockFriend: false
+  afterUnblockFriend: false
+  afterCreateChatGroup: false
+  afterModifyChatGroup: false
+  afterDismissChatGroup: false
+  afterDeleteChatGroupMember: false
+  beforeAddChatGroupMember: false
+  afterAddChatGroupMember: false
   

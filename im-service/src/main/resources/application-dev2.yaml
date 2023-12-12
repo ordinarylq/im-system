@@ -5,7 +5,7 @@ spring:
     username: root
     password: 123456
   redis:
-    url: 192.168.145.128
+    host: 192.168.145.128
     port: 6379
     database: 0
     password: 123456
@@ -13,7 +13,7 @@ spring:
     host: 192.168.145.128
     port: 5672
     username: admin
-    password: admin
+    password: 123456
     listener:
       simple:
         concurrency: 5

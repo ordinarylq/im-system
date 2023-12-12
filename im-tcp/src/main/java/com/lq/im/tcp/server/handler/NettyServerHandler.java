@@ -32,4 +32,11 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             ctx.channel().attr(AttributeKey.valueOf(Constants.LAST_READ_TIME)).set(System.currentTimeMillis());
         }
     }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        log.error("An error occurred: {}", cause.getMessage());
+        log.error("Removing problematic channel");
+        SessionHandler.logout((NioSocketChannel) ctx.channel());
+    }
 }

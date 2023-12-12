@@ -1,6 +1,7 @@
 package com.lq.im.tcp.server;
 
 import com.lq.im.codec.body.OfflineNotificationMessageBody;
+import com.lq.im.codec.proto.ImServiceMessage;
 import com.lq.im.common.enums.gateway.SystemCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
@@ -22,13 +23,13 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
         imei = UUID.randomUUID().toString().getBytes();
 //        MyMessage message = new MyMessage("liqi", "bot", "Hello, World!");
 //        byte[] messageData = JSONObject.toJSONString(message).getBytes(StandardCharsets.UTF_8);
-        String data = "{\"userId\": \"liqi1\"}";
+        String data = "{\"userId\": \"test003\"}";
         byte[] messageData = data.getBytes(StandardCharsets.UTF_8);
         ByteBuf buffer = ctx.alloc().buffer();
         buffer.writeInt(9000)
                 .writeInt(1)
-                .writeInt(3)
-                .writeInt(10000)
+                .writeInt(5)
+                .writeInt(1000)
                 .writeInt(0x0)
                 .writeInt(imei.length)
                 .writeInt(messageData.length);
@@ -44,7 +45,7 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
             if (messageBody.getCommand() == SystemCommand.OFFLINE_NOTIFICATION.getCommand()) {
                 log.info("接收到客户端下线通知，退出登录...");
                 log.info("与服务器断开连接！");
-                String data = "{\"userId\": \"liqi\"}";
+                String data = "{\"userId\": \"test003\"}";
                 byte[] messageData = data.getBytes(StandardCharsets.UTF_8);
                 ByteBuf buffer = ctx.alloc().buffer();
                 buffer.writeInt(9003)
@@ -59,6 +60,9 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
                 ChannelFuture f = ctx.writeAndFlush(buffer);
                 f.addListener(ChannelFutureListener.CLOSE);
             }
+        } else if (msg instanceof ImServiceMessage) {
+            ImServiceMessage serviceMessage = (ImServiceMessage) msg;
+            log.info("Getting message: {}", serviceMessage);
         }
     }
 }
