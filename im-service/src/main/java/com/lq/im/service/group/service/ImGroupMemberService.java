@@ -1,6 +1,7 @@
 package com.lq.im.service.group.service;
 
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.service.group.model.ImGroupMemberDAO;
 import com.lq.im.service.group.model.req.*;
 
@@ -36,7 +37,9 @@ public interface ImGroupMemberService {
 
     ResponseVO<?> getGroupIdListBy(Integer appId, String memberId);
 
-    ResponseVO<?> updateGroupMemberInfo(Integer appId, String groupId, ImGroupMemberDTO groupMemberDTO);
+    ResponseVO<List<ImGroupMemberDTO>> getGroupManagerList(Integer appId, String groupId);
+
+    ResponseVO<?> updateGroupMemberInfo(UserClientDTO userClient, String groupId, ImGroupMemberDTO groupMemberDTO);
 
     ResponseVO<?> updateGroupMemberInfo(UpdateGroupMemberReq req);
 

@@ -5,15 +5,20 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.constant.Constants;
+import com.lq.im.common.enums.group.GroupCommand;
 import com.lq.im.common.enums.group.GroupErrorCodeEnum;
 import com.lq.im.common.enums.group.GroupMemberRoleEnum;
 import com.lq.im.common.enums.group.GroupTypeEnum;
+import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.service.config.HttpClientProperties;
 import com.lq.im.service.callback.CallbackService;
 import com.lq.im.service.group.mapper.ImGroupMemberMapper;
 import com.lq.im.service.group.model.ImGroupDAO;
 import com.lq.im.service.group.model.ImGroupMemberDAO;
 import com.lq.im.service.group.model.callback.AfterAddChatGroupMemberCallbackDTO;
+import com.lq.im.service.group.model.message.AddGroupMemberDTO;
+import com.lq.im.service.group.model.message.RemoveGroupMemberDTO;
+import com.lq.im.service.group.model.message.UpdateGroupMemberDTO;
 import com.lq.im.service.group.model.req.*;
 import com.lq.im.service.group.model.resp.ImportGroupMemberResp;
 import com.lq.im.service.group.model.resp.InviteUserResp;
@@ -21,6 +26,7 @@ import com.lq.im.service.group.service.ImGroupMemberService;
 import com.lq.im.service.group.service.ImGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
+import com.lq.im.service.utils.GroupMessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -50,6 +56,8 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
     private HttpClientProperties httpClientProperties;
     @Resource
     private CallbackService callbackService;
+    @Resource
+    private GroupMessageUtils groupMessageUtils;
 
     @Override
     @Transactional
@@ -177,6 +185,13 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
                         new ImportGroupMemberResp.ResultItem(userId, responseVO != null ? responseVO.getMsg() : ""));
             }
         }
+        AddGroupMemberDTO addGroupMemberMsg = new AddGroupMemberDTO();
+        addGroupMemberMsg.setAppId(req.getAppId());
+        addGroupMemberMsg.setGroupId(req.getGroupId());
+        addGroupMemberMsg.setInviteeIdList(resp.getSuccessUserIdList());
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.groupMessageUtils.sendMessage(userClient, GroupCommand.ADD_GROUP_MEMBER, addGroupMemberMsg);
         if (this.httpClientProperties.isAfterAddChatGroupMember()) {
             AfterAddChatGroupMemberCallbackDTO callbackDTO = new AfterAddChatGroupMemberCallbackDTO(
                     req.getGroupId(), groupInfo.getGroupType(), req.getOperator(), resp);
@@ -252,6 +267,11 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         if (!responseVO.isOk()) {
             return responseVO;
         }
+        RemoveGroupMemberDTO removeGroupMemberMsg = new RemoveGroupMemberDTO();
+        BeanUtils.copyProperties(req, removeGroupMemberMsg);
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.groupMessageUtils.sendMessage(userClient, GroupCommand.REMOVE_GROUP_MEMBER, removeGroupMemberMsg);
         if (this.httpClientProperties.isAfterDeleteChatGroupMember()) {
             this.callbackService.afterCallback(req.getAppId(), Constants.CallbackCommand.AFTER_DELETE_CHAT_GROUP_MEMBER,
                     JSONObject.toJSONString(req));
@@ -327,10 +347,22 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
     }
 
     @Override
+    public ResponseVO<List<ImGroupMemberDTO>> getGroupManagerList(Integer appId, String groupId) {
+        List<ImGroupMemberDTO> groupMemberList;
+        try {
+            groupMemberList = this.imGroupMemberMapper.getGroupManagerList(appId, groupId);
+        } catch (Exception e) {
+            log.error(ERROR_MESSAGE, e);
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.GET_GROUP_MEMBER_ERROR);
+        }
+        return ResponseVO.successResponse(groupMemberList);
+    }
+
+    @Override
     @Transactional
-    public ResponseVO<?> updateGroupMemberInfo(Integer appId, String groupId, ImGroupMemberDTO groupMemberDTO) {
+    public ResponseVO<?> updateGroupMemberInfo(UserClientDTO userClient, String groupId, ImGroupMemberDTO groupMemberDTO) {
         QueryWrapper<ImGroupMemberDAO> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("app_id", appId)
+        queryWrapper.eq("app_id", userClient.getAppId())
                 .eq("group_id", groupId)
                 .eq("member_id", groupMemberDTO.getMemberId());
         ImGroupMemberDAO groupMemberDAO = new ImGroupMemberDAO();
@@ -344,6 +376,12 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_MEMBER_INFO_ERROR);
         }
+        UpdateGroupMemberDTO updateGroupMemberMsg = new UpdateGroupMemberDTO();
+        updateGroupMemberMsg.setAppId(userClient.getAppId());
+        updateGroupMemberMsg.setGroupId(groupId);
+        updateGroupMemberMsg.setMemberId(groupMemberDTO.getMemberId());
+        updateGroupMemberMsg.setAlias(groupMemberDTO.getAlias());
+        this.groupMessageUtils.sendMessage(userClient, GroupCommand.UPDATE_GROUP_MEMBER, updateGroupMemberMsg);
         return ResponseVO.successResponse();
     }
 
@@ -405,7 +443,9 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         if (req.getMemberRole() != null && req.getMemberRole() != GroupMemberRoleEnum.OWNER.getCode()) {
             memberDTO.setMemberRole(req.getMemberRole());
         }
-        return this.imGroupMemberService.updateGroupMemberInfo(req.getAppId(), req.getGroupId(), memberDTO);
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        return this.imGroupMemberService.updateGroupMemberInfo(userClient, req.getGroupId(), memberDTO);
     }
 
     @Override

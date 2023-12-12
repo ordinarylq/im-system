@@ -6,22 +6,22 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.constant.Constants.CallbackCommand;
-import com.lq.im.common.enums.group.GroupErrorCodeEnum;
-import com.lq.im.common.enums.group.GroupMemberRoleEnum;
-import com.lq.im.common.enums.group.GroupStatusEnum;
-import com.lq.im.common.enums.group.GroupTypeEnum;
+import com.lq.im.common.enums.group.*;
+import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.service.config.HttpClientProperties;
 import com.lq.im.service.callback.CallbackService;
 import com.lq.im.service.group.mapper.ImGroupMapper;
 import com.lq.im.service.group.model.ImGroupDAO;
 import com.lq.im.service.group.model.ImGroupMemberDAO;
 import com.lq.im.service.group.model.callback.AfterDismissChatGroupCallbackDTO;
+import com.lq.im.service.group.model.message.*;
 import com.lq.im.service.group.model.req.*;
 import com.lq.im.service.group.model.resp.GetGroupWithMemberListResp;
 import com.lq.im.service.group.service.ImGroupMemberService;
 import com.lq.im.service.group.service.ImGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
+import com.lq.im.service.utils.GroupMessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -49,6 +49,8 @@ public class ImGroupServiceImpl implements ImGroupService {
     private HttpClientProperties httpClientProperties;
     @Resource
     private CallbackService callbackService;
+    @Resource
+    private GroupMessageUtils groupMessageUtils;
 
     @Override
     @Transactional
@@ -125,6 +127,11 @@ public class ImGroupServiceImpl implements ImGroupService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.CREATE_GROUP_ERROR);
         }
+        CreateGroupDTO createGroupMsg = new CreateGroupDTO();
+        BeanUtils.copyProperties(groupDAO, createGroupMsg);
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.groupMessageUtils.sendMessage(userClient, GroupCommand.CREATE_CHAT_GROUP, createGroupMsg);
         if (this.httpClientProperties.isAfterCreateChatGroup()) {
             this.callbackService.afterCallback(req.getAppId(), CallbackCommand.AFTER_CREATE_CHAT_GROUP,
                     JSONObject.toJSONString(groupDAO));
@@ -182,6 +189,10 @@ public class ImGroupServiceImpl implements ImGroupService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
         }
+        UpdateGroupInfoDTO updateGroupInfoMsg = new UpdateGroupInfoDTO();
+        BeanUtils.copyProperties(req, updateGroupInfoMsg);
+        UserClientDTO userClient = new UserClientDTO();
+        this.groupMessageUtils.sendMessage(userClient, GroupCommand.UPDATE_CHAT_GROUP_INFO, updateGroupInfoMsg);
         if (this.httpClientProperties.isAfterModifyChatGroup()) {
             this.callbackService.beforeCallback(req.getAppId(), CallbackCommand.AFTER_MODIFY_CHAT_GROUP,
                     JSONObject.toJSONString(this.imGroupMapper.selectOne(wrapper)));
@@ -275,6 +286,12 @@ public class ImGroupServiceImpl implements ImGroupService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.DISMISS_GROUP_ERROR);
         }
+        DismissGroupDTO dismissGroupMsg = new DismissGroupDTO();
+        dismissGroupMsg.setAppId(req.getAppId());
+        dismissGroupMsg.setGroupId(req.getGroupId());
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.groupMessageUtils.sendMessage(userClient, GroupCommand.DISMISS_CHAT_GROUP, dismissGroupMsg);
         if (this.httpClientProperties.isAfterDismissChatGroup()) {
             this.callbackService.beforeCallback(req.getAppId(), CallbackCommand.AFTER_DISMISS_CHAT_GROUP,
                     JSONObject.toJSONString(new AfterDismissChatGroupCallbackDTO(req.getGroupId())));
@@ -334,8 +351,10 @@ public class ImGroupServiceImpl implements ImGroupService {
         ImGroupMemberDTO memberDTO = new ImGroupMemberDTO();
         memberDTO.setMemberId(req.getOperator());
         memberDTO.setMemberRole(GroupMemberRoleEnum.ORDINARY.getCode());
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
         ResponseVO<?> updateOwnerMemberResp =
-                this.imGroupMemberService.updateGroupMemberInfo(req.getAppId(), req.getGroupId(), memberDTO);
+                this.imGroupMemberService.updateGroupMemberInfo(userClient, req.getGroupId(), memberDTO);
         if (!updateOwnerMemberResp.isOk()) {
             return updateOwnerMemberResp;
         }
@@ -343,10 +362,15 @@ public class ImGroupServiceImpl implements ImGroupService {
         memberDTO.setMemberId(req.getAssigneeId());
         memberDTO.setMemberRole(GroupMemberRoleEnum.OWNER.getCode());
         ResponseVO<?> updateAssigneeMemberResp =
-                this.imGroupMemberService.updateGroupMemberInfo(req.getAppId(), req.getGroupId(), memberDTO);
+                this.imGroupMemberService.updateGroupMemberInfo(userClient, req.getGroupId(), memberDTO);
         if (!updateOwnerMemberResp.isOk()) {
             return updateAssigneeMemberResp;
         }
+        HandOverGroupDTO handOverGroupMsg = new HandOverGroupDTO();
+        handOverGroupMsg.setAppId(req.getAppId());
+        handOverGroupMsg.setGroupId(req.getGroupId());
+        handOverGroupMsg.setAssigneeId(req.getAssigneeId());
+        this.groupMessageUtils.sendMessage(userClient, GroupCommand.HAND_OVER_CHAT_GROUP, handOverGroupMsg);
         return ResponseVO.successResponse();
     }
 
@@ -388,6 +412,12 @@ public class ImGroupServiceImpl implements ImGroupService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
         }
+        MuteGroupDTO muteGroupMsg = new MuteGroupDTO();
+        muteGroupMsg.setAppId(req.getAppId());
+        muteGroupMsg.setGroupId(req.getGroupId());
+        UserClientDTO userClient = new UserClientDTO();
+        BeanUtils.copyProperties(req, userClient);
+        this.groupMessageUtils.sendMessage(userClient, GroupCommand.MUTE_CHAT_GROUP, muteGroupMsg);
         return ResponseVO.successResponse();
     }
 }

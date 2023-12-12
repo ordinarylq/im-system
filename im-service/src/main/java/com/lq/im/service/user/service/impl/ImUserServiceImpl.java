@@ -14,7 +14,7 @@ import com.lq.im.service.user.model.req.*;
 import com.lq.im.service.user.model.resp.GetUserInfoResp;
 import com.lq.im.service.user.model.resp.ImportUserResp;
 import com.lq.im.service.user.service.ImUserService;
-import com.lq.im.service.utils.MessageQueueUtils;
+import com.lq.im.service.utils.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,7 @@ public class ImUserServiceImpl implements ImUserService {
     @Resource
     private CallbackService callbackService;
     @Resource
-    private MessageQueueUtils messageQueueUtils;
+    private MessageUtils messageUtils;
 
     @Override
     public ResponseVO<?> importUser(ImportUserReq req) {
@@ -156,7 +156,7 @@ public class ImUserServiceImpl implements ImUserService {
             return ResponseVO.errorResponse(UserErrorCodeEnum.MODIFY_USER_ERROR);
         }
         UserClientDTO userClient = new UserClientDTO(req.getAppId(), req.getClientType(), req.getUserId(), req.getImei());
-        this.messageQueueUtils.sendMessage(USER_INFO_MODIFIED, req, userClient);
+        this.messageUtils.sendMessage(USER_INFO_MODIFIED, req, userClient);
         if (this.httpClientProperties.isAfterUserInfoModified()) {
             this.callbackService.afterCallback(req.getAppId(), AFTER_USER_INFO_MODIFIED, JSONObject.toJSONString(req));
         }

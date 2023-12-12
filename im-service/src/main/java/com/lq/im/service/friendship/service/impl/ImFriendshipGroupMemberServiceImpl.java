@@ -19,7 +19,7 @@ import com.lq.im.service.friendship.service.ImFriendshipGroupMemberService;
 import com.lq.im.service.friendship.service.ImFriendshipGroupService;
 import com.lq.im.service.user.model.ImUserDAO;
 import com.lq.im.service.user.service.ImUserService;
-import com.lq.im.service.utils.MessageQueueUtils;
+import com.lq.im.service.utils.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
     @Resource
     private ImUserService imUserService;
     @Resource
-    private MessageQueueUtils messageQueueUtils;
+    private MessageUtils messageUtils;
 
     @Override
     public Integer addGroupMember(Long groupId, String userId) {
@@ -111,7 +111,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
         addGroupMemberMsg.setFriendIdList(resp.getSuccessUserIdList());
         UserClientDTO userClient = new UserClientDTO();
         BeanUtils.copyProperties(req, userClient);
-        this.messageQueueUtils.sendMessage(FriendshipCommand.ADD_FRIEND_GROUP_MEMBER, addGroupMemberMsg, userClient);
+        this.messageUtils.sendMessage(FriendshipCommand.ADD_FRIEND_GROUP_MEMBER, addGroupMemberMsg, userClient);
         return ResponseVO.successResponse(resp);
     }
 
@@ -164,7 +164,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
         removeGroupMemberMsg.setFriendIdList(resp.getSuccessUserIdList());
         UserClientDTO userClient = new UserClientDTO();
         BeanUtils.copyProperties(req, userClient);
-        this.messageQueueUtils.sendMessage(FriendshipCommand.REMOVE_FRIEND_GROUP_MEMBER, removeGroupMemberMsg, userClient);
+        this.messageUtils.sendMessage(FriendshipCommand.REMOVE_FRIEND_GROUP_MEMBER, removeGroupMemberMsg, userClient);
         return ResponseVO.successResponse(resp);
     }
 }

@@ -17,7 +17,7 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-public class MessageQueueUtils {
+public class MessageUtils {
     @Resource
     private RabbitTemplate rabbitTemplate;
     @Resource

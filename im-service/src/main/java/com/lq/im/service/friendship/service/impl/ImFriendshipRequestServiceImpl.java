@@ -14,7 +14,7 @@ import com.lq.im.service.friendship.model.req.GetAllFriendshipRequestReq;
 import com.lq.im.service.friendship.model.req.ReadFriendshipRequestReq;
 import com.lq.im.service.friendship.service.ImFriendshipRequestService;
 import com.lq.im.service.friendship.service.ImFriendshipService;
-import com.lq.im.service.utils.MessageQueueUtils;
+import com.lq.im.service.utils.MessageUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
     @Resource
     private ImFriendshipService imFriendshipService;
     @Resource
-    private MessageQueueUtils messageQueueUtils;
+    private MessageUtils messageUtils;
 
     @Override
     public ResponseVO<?> addFriendRequest(Integer appId, String userId, FriendInfo friendInfo) {
@@ -65,7 +65,7 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
                     System.currentTimeMillis(), System.currentTimeMillis(), null, friendInfo.getAddSource());
             this.imFriendshipRequestMapper.insert(imFriendshipRequestDAO);
         }
-        this.messageQueueUtils.sendMessageToAllDevicesOfOneUser(appId, friendInfo.getFriendUserId(),
+        this.messageUtils.sendMessageToAllDevicesOfOneUser(appId, friendInfo.getFriendUserId(),
                 FriendshipCommand.ADD_FRIEND_REQUEST, imFriendshipRequestDAO);
         return ResponseVO.successResponse();
     }
@@ -112,7 +112,7 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
         BeanUtils.copyProperties(req, approveFriendshipRequestMsg);
         UserClientDTO userClient = new UserClientDTO();
         BeanUtils.copyProperties(req, userClient);
-        this.messageQueueUtils.sendMessage(FriendshipCommand.APPROVE_FRIEND_REQUEST, approveFriendshipRequestMsg, userClient);
+        this.messageUtils.sendMessage(FriendshipCommand.APPROVE_FRIEND_REQUEST, approveFriendshipRequestMsg, userClient);
         return ResponseVO.successResponse();
     }
 
@@ -129,7 +129,7 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
         BeanUtils.copyProperties(req, readFriendshipRequestMsg);
         UserClientDTO userClient = new UserClientDTO();
         BeanUtils.copyProperties(req, userClient);
-        this.messageQueueUtils.sendMessage(FriendshipCommand.READ_FRIEND_REQUEST, readFriendshipRequestMsg, userClient);
+        this.messageUtils.sendMessage(FriendshipCommand.READ_FRIEND_REQUEST, readFriendshipRequestMsg, userClient);
         return ResponseVO.successResponse();
     }
 

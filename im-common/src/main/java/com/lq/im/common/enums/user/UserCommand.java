@@ -9,8 +9,6 @@ public enum UserCommand implements Command {
     USER_INFO_MODIFIED(0x0FA0),
     ;
 
-
-
     private final int command;
 
     UserCommand(int command) {
