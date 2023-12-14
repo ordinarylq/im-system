@@ -12,8 +12,9 @@ import org.springframework.context.annotation.Configuration;
 import javax.annotation.Resource;
 
 @Configuration
-@EnableConfigurationProperties({HttpClientProperties.class})
-public class CallbackConfig {
+@EnableConfigurationProperties({ApplicationConfigProperties.class, HttpClientProperties.class})
+public class ApplicationAutoConfiguration {
+
     @Resource
     private HttpClientProperties httpClientProperties;
 

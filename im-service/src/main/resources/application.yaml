@@ -21,6 +21,9 @@ router:
   routeStrategy: 0
   hashingStrategy: 1
 
+appConfig:
+  privateKey: 123456
+
 httpclient:
   maxTotal: 100
   defaultMaxPerRoute: 50

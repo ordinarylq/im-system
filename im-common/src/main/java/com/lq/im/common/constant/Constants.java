@@ -13,15 +13,19 @@ public class Constants {
     public static final String LAST_READ_TIME = "lastReadTime";
 
     public static class RedisConstants {
+        public static final String REDIS_KEY_SEPARATOR = ":";
+
         /**
          * Redis Hash key format: {appId}:userSession:{userId}
          */
-        public static final String USER_SESSION = ":userSession:";
+        public static final String USER_SESSION = REDIS_KEY_SEPARATOR + "userSession" + REDIS_KEY_SEPARATOR;
 
         /**
          * 多端登录时的发布订阅频道名称
          */
         public static final String USER_LOGIN_CHANNEL = "user-login";
+
+        public static final String USER_SIGNATURE = REDIS_KEY_SEPARATOR + "userSignature" + REDIS_KEY_SEPARATOR;
     }
 
     public static class MessageQueueConstants {
