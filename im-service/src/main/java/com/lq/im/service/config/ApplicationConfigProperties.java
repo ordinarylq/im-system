@@ -9,4 +9,8 @@ public class ApplicationConfigProperties {
 
     private String privateKey;
 
+    private boolean enableSocialNetworkCheck;
+
+    private boolean enableBlockListCheck;
+
 }

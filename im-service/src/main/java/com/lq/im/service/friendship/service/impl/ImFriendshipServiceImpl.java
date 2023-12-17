@@ -339,8 +339,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         QueryWrapper<ImFriendshipDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("app_id", req.getAppId())
                 .eq("from_id", req.getUserId())
-                .eq("to_id", req.getFriendUserId())
-                .eq("status", FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode());
+                .eq("to_id", req.getFriendUserId());
         ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
         if(imFriendshipDAO == null) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIENDSHIP_IS_NOT_EXIST);

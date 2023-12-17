@@ -35,6 +35,9 @@ public interface ApplicationExceptionEnum {
     int FRIEND_IS_DELETED_CODE = 30004;
     String FRIEND_IS_DELETED_MESSAGE = "好友已被删除";
 
+    int YOU_ARE_DELETED_CODE = 30021;
+    String YOU_ARE_DELETED_MESSAGE = "你已被好友删除";
+
     int FRIEND_IS_BLOCKED_CODE = 30006;
     String FRIEND_IS_BLOCKED_MESSAGE = "好友已被拉黑";
 

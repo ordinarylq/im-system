@@ -4,6 +4,7 @@ import com.lq.im.codec.proto.Message;
 import com.lq.im.codec.proto.MessageHeader;
 import com.lq.im.common.constant.Constants;
 import com.lq.im.common.enums.gateway.SystemCommand;
+import com.lq.im.tcp.mq.producer.MessageProducer;
 import com.lq.im.tcp.utils.SessionHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -30,6 +31,8 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             SessionHandler.logout((NioSocketChannel) ctx.channel());
         } else if (command == SystemCommand.PING.getCommand()) {
             ctx.channel().attr(AttributeKey.valueOf(Constants.LAST_READ_TIME)).set(System.currentTimeMillis());
+        } else {
+            MessageProducer.sendMessage(msg);
         }
     }
 

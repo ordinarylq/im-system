@@ -1,8 +1,12 @@
 package com.lq.im.tcp.server;
 
+import com.alibaba.fastjson.JSONObject;
 import com.lq.im.codec.body.OfflineNotificationMessageBody;
 import com.lq.im.codec.proto.ImServiceMessage;
+import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.gateway.SystemCommand;
+import com.lq.im.common.enums.message.MessageCommand;
+import com.lq.im.common.model.UserClientDTO;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -17,13 +21,14 @@ import java.util.UUID;
 public class ImClientHandler extends ChannelInboundHandlerAdapter {
     private byte[] imei;
 
+    private String userId = "test004";
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         log.info("成功与服务端建立连接！");
         imei = UUID.randomUUID().toString().getBytes();
-//        MyMessage message = new MyMessage("liqi", "bot", "Hello, World!");
-//        byte[] messageData = JSONObject.toJSONString(message).getBytes(StandardCharsets.UTF_8);
-        String data = "{\"userId\": \"test003\"}";
+        // login
+        String data = "{\"userId\": \"" + userId + "\"}";
         byte[] messageData = data.getBytes(StandardCharsets.UTF_8);
         ByteBuf buffer = ctx.alloc().buffer();
         buffer.writeInt(9000)
@@ -36,7 +41,11 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
         buffer.writeBytes(imei);
         buffer.writeBytes(messageData);
         ctx.writeAndFlush(buffer);
+        // 启动发送消息的线程
+        UserClientDTO userClient = new UserClientDTO(1000, 5, userId, new String(imei));
+        new Thread(new MessageBox(ctx, userClient)).start();
     }
+
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -62,7 +71,19 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
             }
         } else if (msg instanceof ImServiceMessage) {
             ImServiceMessage serviceMessage = (ImServiceMessage) msg;
-            log.info("Getting message: {}", serviceMessage);
+            if (serviceMessage.getCommand() == MessageCommand.MESSAGE_ACK.getCommand()) {
+                ResponseVO<?> resp = ((JSONObject) serviceMessage.getData()).toJavaObject(ResponseVO.class);
+                if (resp.isOk()) {
+                    System.out.format("%n[消息发送成功]%n");
+                } else {
+                    System.out.format("%n消息发送失败%n");
+                    log.error("detail message: {}", resp);
+                }
+            } else if (serviceMessage.getCommand() == MessageCommand.PEER_TO_PEER.getCommand()) {
+                JSONObject jsonObject = (JSONObject) JSONObject.toJSON(serviceMessage.getData());
+                System.out.format("%n[%s]: [%s]%n", jsonObject.getString("userId"), jsonObject.getString("data"));
+                log.info("detail message: {}", serviceMessage.getData());
+            }
         }
     }
 }

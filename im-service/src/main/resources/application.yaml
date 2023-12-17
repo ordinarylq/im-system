@@ -23,6 +23,8 @@ router:
 
 appConfig:
   privateKey: 123456
+  enableSocialNetworkCheck: true
+  enableBlockListCheck: true
 
 httpclient:
   maxTotal: 100
