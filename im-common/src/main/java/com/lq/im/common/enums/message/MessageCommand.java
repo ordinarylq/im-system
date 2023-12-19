@@ -8,7 +8,10 @@ public enum MessageCommand implements Command {
      * 单聊 0D1000
      */
     PEER_TO_PEER(0x03E8),
-
+    /**
+     * 群聊 0D1002
+     */
+    PEER_TO_GROUP(0x03EA),
     /**
      * 消息确认 0D1001
      */

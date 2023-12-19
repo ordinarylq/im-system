@@ -1,4 +1,4 @@
-package com.lq.im.service.message.model;
+package com.lq.im.common.model.message;
 
 import com.lq.im.common.model.UserClientDTO;
 import lombok.Data;

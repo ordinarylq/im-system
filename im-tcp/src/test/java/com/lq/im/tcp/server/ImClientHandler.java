@@ -2,6 +2,7 @@ package com.lq.im.tcp.server;
 
 import com.alibaba.fastjson.JSONObject;
 import com.lq.im.codec.body.OfflineNotificationMessageBody;
+import com.lq.im.codec.proto.ImServiceGroupMessage;
 import com.lq.im.codec.proto.ImServiceMessage;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.gateway.SystemCommand;
@@ -21,7 +22,9 @@ import java.util.UUID;
 public class ImClientHandler extends ChannelInboundHandlerAdapter {
     private byte[] imei;
 
-    private String userId = "test004";
+    private final String userId = "test005";
+    private final Integer clientType = 5;
+    private final Integer appId = 1000;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -33,8 +36,8 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
         ByteBuf buffer = ctx.alloc().buffer();
         buffer.writeInt(9000)
                 .writeInt(1)
-                .writeInt(5)
-                .writeInt(1000)
+                .writeInt(clientType)
+                .writeInt(appId)
                 .writeInt(0x0)
                 .writeInt(imei.length)
                 .writeInt(messageData.length);
@@ -42,8 +45,8 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
         buffer.writeBytes(messageData);
         ctx.writeAndFlush(buffer);
         // 启动发送消息的线程
-        UserClientDTO userClient = new UserClientDTO(1000, 5, userId, new String(imei));
-        new Thread(new MessageBox(ctx, userClient)).start();
+        UserClientDTO userClient = new UserClientDTO(appId, clientType, userId, new String(imei));
+        new Thread(new GroupMessageBox(ctx, userClient)).start();
     }
 
 
@@ -54,13 +57,13 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
             if (messageBody.getCommand() == SystemCommand.OFFLINE_NOTIFICATION.getCommand()) {
                 log.info("接收到客户端下线通知，退出登录...");
                 log.info("与服务器断开连接！");
-                String data = "{\"userId\": \"test003\"}";
+                String data = "{\"userId\": \"" + userId + "\"}";
                 byte[] messageData = data.getBytes(StandardCharsets.UTF_8);
                 ByteBuf buffer = ctx.alloc().buffer();
                 buffer.writeInt(9003)
                         .writeInt(1)
-                        .writeInt(5)
-                        .writeInt(10000)
+                        .writeInt(clientType)
+                        .writeInt(appId)
                         .writeInt(0x0)
                         .writeInt(imei.length)
                         .writeInt(messageData.length);
@@ -70,7 +73,7 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
                 f.addListener(ChannelFutureListener.CLOSE);
             }
         } else if (msg instanceof ImServiceMessage) {
-            ImServiceMessage serviceMessage = (ImServiceMessage) msg;
+            ImServiceMessage<?> serviceMessage = (ImServiceMessage<?>) msg;
             if (serviceMessage.getCommand() == MessageCommand.MESSAGE_ACK.getCommand()) {
                 ResponseVO<?> resp = ((JSONObject) serviceMessage.getData()).toJavaObject(ResponseVO.class);
                 if (resp.isOk()) {
@@ -80,8 +83,16 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
                     log.error("detail message: {}", resp);
                 }
             } else if (serviceMessage.getCommand() == MessageCommand.PEER_TO_PEER.getCommand()) {
+                // 单聊
                 JSONObject jsonObject = (JSONObject) JSONObject.toJSON(serviceMessage.getData());
                 System.out.format("%n[%s]: [%s]%n", jsonObject.getString("userId"), jsonObject.getString("data"));
+                log.info("detail message: {}", serviceMessage.getData());
+            } else if (serviceMessage.getCommand() == MessageCommand.PEER_TO_GROUP.getCommand()) {
+                // 群聊
+                ImServiceGroupMessage<?> groupMessage = (ImServiceGroupMessage<?>) serviceMessage;
+                JSONObject jsonObject = (JSONObject) JSONObject.toJSON(groupMessage.getData());
+                System.out.format("%n[%s][%s]: [%s]%n", jsonObject.getString("userId"),
+                        jsonObject.getString("groupId"), jsonObject.getString("data"));
                 log.info("detail message: {}", serviceMessage.getData());
             }
         }

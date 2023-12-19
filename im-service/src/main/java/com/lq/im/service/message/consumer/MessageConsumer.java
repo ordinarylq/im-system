@@ -1,10 +1,10 @@
-package com.lq.im.service.message;
+package com.lq.im.service.message.consumer;
 
 import static com.lq.im.common.constant.Constants.*;
 
 import com.alibaba.fastjson.JSONObject;
 import com.lq.im.common.enums.message.MessageCommand;
-import com.lq.im.service.message.model.MessageContent;
+import com.lq.im.common.model.message.MessageContent;
 import com.lq.im.service.message.service.PeerToPeerMessageService;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;

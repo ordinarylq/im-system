@@ -4,8 +4,7 @@ import com.lq.im.codec.body.ChatMessageAck;
 import com.lq.im.codec.proto.ImServiceMessage;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.message.MessageCommand;
-import com.lq.im.common.model.UserClientDTO;
-import com.lq.im.service.message.model.MessageContent;
+import com.lq.im.common.model.message.MessageContent;
 import com.lq.im.service.utils.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -32,7 +31,7 @@ public class PeerToPeerMessageService {
             return;
         }
         ack(messageContent, responseVO);
-        forwardMessageToSenderEndpoints(messageContent, messageContent.getUserClient());
+        forwardMessageToSenderEndpoints(messageContent);
         sendMessageToReceiverEndpoints(messageContent);
     }
 
@@ -57,7 +56,7 @@ public class PeerToPeerMessageService {
     /**
      * 同步消息至发送方的其他端
      */
-    private void forwardMessageToSenderEndpoints(MessageContent messageContent, UserClientDTO userClientDTO) {
+    private void forwardMessageToSenderEndpoints(MessageContent messageContent) {
         ImServiceMessage<Object> serviceMessage = new ImServiceMessage<>();
         BeanUtils.copyProperties(messageContent.getUserClient(), serviceMessage);
         serviceMessage.setCommand(MessageCommand.PEER_TO_PEER.getCommand());

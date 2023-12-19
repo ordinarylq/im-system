@@ -2,6 +2,7 @@ package com.lq.im.tcp.server;
 
 import com.alibaba.fastjson.JSON;
 import com.lq.im.codec.body.OfflineNotificationMessageBody;
+import com.lq.im.codec.proto.ImServiceGroupMessage;
 import com.lq.im.codec.proto.ImServiceMessage;
 import com.lq.im.common.enums.gateway.SystemCommand;
 import com.lq.im.common.enums.message.MessageCommand;
@@ -39,6 +40,9 @@ public class ImClientDecoder extends ByteToMessageDecoder {
             out.add(message);
         } else if (command == MessageCommand.PEER_TO_PEER.getCommand()) {
             ImServiceMessage<?> message = JSON.parseObject(new String(data), ImServiceMessage.class);
+            out.add(message);
+        } else if (command == MessageCommand.PEER_TO_GROUP.getCommand()) {
+            ImServiceGroupMessage<?> message = JSON.parseObject(new String(data), ImServiceGroupMessage.class);
             out.add(message);
         }
         in.markReaderIndex();
