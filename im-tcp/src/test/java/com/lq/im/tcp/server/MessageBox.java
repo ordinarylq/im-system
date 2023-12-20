@@ -1,12 +1,14 @@
 package com.lq.im.tcp.server;
 
 import com.alibaba.fastjson.JSONObject;
+import com.lq.im.common.enums.message.MessageCommand;
 import com.lq.im.common.model.UserClientDTO;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 import java.util.Scanner;
 
 @Slf4j
@@ -24,11 +26,11 @@ public class MessageBox implements Runnable{
     public void run() {
         Scanner scanner = new Scanner(System.in);
         String message;
-        ByteBuf buffer = null;
+        ByteBuf buffer;
         while (true) {
-            System.out.print(">>>请发送消息(接收方:消息体)>>>");
+            System.out.print(">>>请发送单聊消息(接收方:消息体)>>>");
             message = scanner.nextLine();
-            String[] messageArray = new String[0];
+            String[] messageArray;
             String friendUserId;
             String messageData;
             try {
@@ -39,22 +41,17 @@ public class MessageBox implements Runnable{
                 log.error("Input error! Please write again.");
                 continue;
             }
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("messageId", "1001");
-            jsonObject.put("friendUserId", friendUserId);
-            jsonObject.put("userClient", userClient);
-            jsonObject.put("messageData", messageData);
             byte[] imei = userClient.getImei().getBytes();
-            byte[] finalMessage = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+            byte[] finalMessage = getMsgData(friendUserId, messageData);
             buffer = ctx.alloc().buffer();
             // command-1000
-            buffer.writeInt(1000)
+            buffer.writeInt(MessageCommand.PEER_TO_PEER.getCommand())
                     // version-1
                     .writeInt(1)
                     // clientType-5
-                    .writeInt(5)
+                    .writeInt(userClient.getClientType())
                     // appId-1000
-                    .writeInt(1000)
+                    .writeInt(userClient.getAppId())
                     // messageType-0
                     .writeInt(0x0)
                     // imei length
@@ -67,5 +64,22 @@ public class MessageBox implements Runnable{
             buffer.writeBytes(finalMessage);
             ctx.writeAndFlush(buffer);
         }
+    }
+
+    private byte[] getMsgData(String friendUserId, String messageData) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("appId", userClient.getAppId());
+        jsonObject.put("messageId", "1001");
+        jsonObject.put("userClient", userClient);
+        jsonObject.put("friendUserId", friendUserId);
+        jsonObject.put("messageData", messageData);
+        jsonObject.put("messageRandom", getRandom());
+        jsonObject.put("messageTime", System.currentTimeMillis());
+        return jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String getRandom() {
+        Random random = new Random(System.currentTimeMillis());
+        return String.valueOf(random.nextLong());
     }
 }

@@ -6,6 +6,8 @@ import lombok.Data;
 @Data
 public class MessageContent {
 
+    private Integer appId;
+
     private String messageId;
 
     private UserClientDTO userClient;
@@ -15,5 +17,13 @@ public class MessageContent {
     private String messageData;
 
     private Integer command;
+
+    private Long messageKey;
+
+    private String messageRandom;
+
+    private Long messageTime;
+
+    private String extra;
 
 }

@@ -20,6 +20,8 @@ public class PeerToPeerMessageService {
     private MessageCheckService messageCheckService;
     @Resource
     private MessageUtils messageUtils;
+    @Resource
+    private MessageStoreService messageStoreService;
 
     public void process(MessageContent messageContent) {
         Integer appId = messageContent.getUserClient().getAppId();
@@ -30,6 +32,7 @@ public class PeerToPeerMessageService {
             ack(messageContent, responseVO);
             return;
         }
+        this.messageStoreService.storeP2PMessage(messageContent);
         ack(messageContent, responseVO);
         forwardMessageToSenderEndpoints(messageContent);
         sendMessageToReceiverEndpoints(messageContent);

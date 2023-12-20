@@ -1,5 +1,6 @@
 package com.lq.im.service.config;
 
+import com.lq.im.service.utils.SnowflakeIdWorker;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -52,5 +53,15 @@ public class ApplicationAutoConfiguration {
     @Bean
     public RequestConfig requestConfig(@Qualifier("requestConfigBuilder") RequestConfig.Builder requestConfigBuilder) {
         return requestConfigBuilder.build();
+    }
+
+    @Bean
+    public MyBatisPlusSqlInjector myBatisPlusSqlInjector() {
+        return new MyBatisPlusSqlInjector();
+    }
+
+    @Bean
+    public SnowflakeIdWorker snowflakeIdWorker() {
+        return new SnowflakeIdWorker(0L, 0L);
     }
 }

@@ -27,7 +27,7 @@ public class GroupMessageBox implements Runnable{
         String message;
         ByteBuf buffer;
         while (true) {
-            System.out.print(">>>请发送消息(群组id:消息体)>>>");
+            System.out.print(">>>请发送群聊消息(群组id:消息体)>>>");
             message = scanner.nextLine();
             String[] messageArray;
             String groupId;

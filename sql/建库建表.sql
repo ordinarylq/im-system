@@ -131,3 +131,31 @@ CREATE TABLE `im_group_member`
     `extra`       varchar(1000) DEFAULT NULL COMMENT '扩展',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='群组成员';
+
+create table `im-core`.im_message_history
+(
+    app_id         int          not null comment '应用id',
+    message_key    bigint       not null comment '消息id',
+    from_id        varchar(50)  not null comment '发送方用户id',
+    to_id          varchar(50)  not null comment '接收方用户id',
+    owner_id       varchar(50)  not null comment '消息所有者id',
+    sequence       int          null comment '序列号',
+    message_random varchar(100) not null comment '消息随机码',
+    message_time   bigint       not null comment '消息发送时间',
+    create_time    bigint       not null comment '创建时间',
+    primary key (app_id, message_key, owner_id)
+)
+    comment '单聊消息';
+
+create table `im-core`.im_message_body
+(
+    app_id       int           not null comment '应用id',
+    message_key  bigint        not null comment '消息id',
+    message_body varchar(1024) not null comment '消息内容',
+    security_key varchar(500)  null comment '消息加密盐值',
+    message_time bigint        not null comment '消息发送时间',
+    create_time  bigint        not null comment '创建时间',
+    del_flag     int default 0 not null comment '删除标识 0-未删除 1-已删除',
+    primary key (app_id, message_key)
+)
+    comment '聊天消息内容';

@@ -22,7 +22,7 @@ import java.util.UUID;
 public class ImClientHandler extends ChannelInboundHandlerAdapter {
     private byte[] imei;
 
-    private final String userId = "test005";
+    private final String userId = "test004";
     private final Integer clientType = 5;
     private final Integer appId = 1000;
 
@@ -46,7 +46,7 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
         ctx.writeAndFlush(buffer);
         // 启动发送消息的线程
         UserClientDTO userClient = new UserClientDTO(appId, clientType, userId, new String(imei));
-        new Thread(new GroupMessageBox(ctx, userClient)).start();
+        new Thread(new MessageBox(ctx, userClient)).start();
     }
 
 
