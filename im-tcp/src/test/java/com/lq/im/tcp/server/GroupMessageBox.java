@@ -8,6 +8,7 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 import java.util.Scanner;
 
 @Slf4j
@@ -40,13 +41,8 @@ public class GroupMessageBox implements Runnable{
                 log.error("Input error! Please write again.");
                 continue;
             }
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("messageId", "1001");
-            jsonObject.put("groupId", groupId);
-            jsonObject.put("userClient", userClient);
-            jsonObject.put("messageData", messageData);
             byte[] imei = userClient.getImei().getBytes();
-            byte[] finalMessage = jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+            byte[] finalMessage = getMsgData(groupId, messageData);
             buffer = ctx.alloc().buffer();
             // command-1000
             buffer.writeInt(MessageCommand.PEER_TO_GROUP.getCommand())
@@ -68,5 +64,22 @@ public class GroupMessageBox implements Runnable{
             buffer.writeBytes(finalMessage);
             ctx.writeAndFlush(buffer);
         }
+    }
+
+    private byte[] getMsgData(String groupId, String messageData) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("appId", userClient.getAppId());
+        jsonObject.put("messageId", "1001");
+        jsonObject.put("userClient", userClient);
+        jsonObject.put("groupId", groupId);
+        jsonObject.put("messageData", messageData);
+        jsonObject.put("messageRandom", getRandom());
+        jsonObject.put("messageTime", System.currentTimeMillis());
+        return jsonObject.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String getRandom() {
+        Random random = new Random(System.currentTimeMillis());
+        return String.valueOf(random.nextLong());
     }
 }

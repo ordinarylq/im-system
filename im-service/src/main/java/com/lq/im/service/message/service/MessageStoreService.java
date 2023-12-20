@@ -3,8 +3,10 @@ package com.lq.im.service.message.service;
 import com.lq.im.common.enums.user.DelFlagEnum;
 import com.lq.im.common.model.message.GroupMessageContent;
 import com.lq.im.common.model.message.MessageContent;
+import com.lq.im.service.message.mapper.ImGroupMessageHistoryMapper;
 import com.lq.im.service.message.mapper.ImMessageBodyMapper;
 import com.lq.im.service.message.mapper.ImMessageHistoryMapper;
+import com.lq.im.service.message.model.ImGroupMessageHistoryDAO;
 import com.lq.im.service.message.model.ImMessageBodyDAO;
 import com.lq.im.service.message.model.ImMessageHistoryDAO;
 import com.lq.im.service.utils.SnowflakeIdWorker;
@@ -23,6 +25,8 @@ public class MessageStoreService {
 
     @Resource
     private ImMessageHistoryMapper imMessageHistoryMapper;
+    @Resource
+    private ImGroupMessageHistoryMapper imGroupMessageHistoryMapper;
     @Resource
     private ImMessageBodyMapper imMessageBodyMapper;
     @Resource
@@ -76,9 +80,18 @@ public class MessageStoreService {
      */
     @Transactional
     public void storeGroupMessage(GroupMessageContent msgContent) {
-        // 1. msg -> body
-        // 2. store body
-        // 3. msg -> history
-        // 4. store history
+        ImMessageBodyDAO messageBody = getMessageBodyFrom(msgContent);
+        this.imMessageBodyMapper.insert(messageBody);
+        msgContent.setMessageKey(messageBody.getMessageKey());
+        ImGroupMessageHistoryDAO groupMessageHistory = getGroupMessageHistoryFrom(msgContent);
+        this.imGroupMessageHistoryMapper.insert(groupMessageHistory);
+    }
+
+    private ImGroupMessageHistoryDAO getGroupMessageHistoryFrom(GroupMessageContent groupMessageContent) {
+        ImGroupMessageHistoryDAO groupMsgHistoryDAO = new ImGroupMessageHistoryDAO();
+        BeanUtils.copyProperties(groupMessageContent, groupMsgHistoryDAO);
+        groupMsgHistoryDAO.setUserId(groupMessageContent.getUserClient().getUserId());
+        groupMsgHistoryDAO.setCreateTime(System.currentTimeMillis());
+        return groupMsgHistoryDAO;
     }
 }

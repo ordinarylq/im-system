@@ -26,6 +26,8 @@ public class GroupMessageService {
     private MessageUtils messageUtils;
     @Resource
     private ImGroupMemberService imGroupMemberService;
+    @Resource
+    private MessageStoreService messageStoreService;
 
 
     public void process(GroupMessageContent groupMessageContent) {
@@ -37,6 +39,7 @@ public class GroupMessageService {
             ack(groupMessageContent, responseVO);
             return;
         }
+        this.messageStoreService.storeGroupMessage(groupMessageContent);
         ack(groupMessageContent, responseVO);
         forwardMessageToSenderEndpoints(groupMessageContent);
         sendMessageToReceiverEndpoints(groupMessageContent);
@@ -53,10 +56,8 @@ public class GroupMessageService {
         serviceMessage.setCommand(MessageCommand.MESSAGE_ACK.getCommand());
         serviceMessage.setGroupId(groupMessageContent.getGroupId());
         log.info("msg ack, msgId={}, checkResult={}", groupMessageContent.getMessageId(), serviceMessage);
-        // 1. 建立响应对象
         ChatMessageAck chatMessageAck = new ChatMessageAck(groupMessageContent.getMessageId());
         responseVO.setData(chatMessageAck);
-        // 2. 发给消息发送方
         this.messageUtils.sendMessageToOneDevice(MessageCommand.MESSAGE_ACK, serviceMessage,
                 groupMessageContent.getUserClient());
     }
