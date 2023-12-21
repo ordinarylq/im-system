@@ -14,31 +14,26 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Service
 public class PeerToPeerMessageService {
 
     @Resource
-    private MessageCheckService messageCheckService;
-    @Resource
     private MessageUtils messageUtils;
     @Resource
     private MessageStoreService messageStoreService;
+    @Resource
+    private ThreadPoolExecutor fixedMsgProcessThreadPool;
 
     public void process(MessageContent messageContent) {
-        Integer appId = messageContent.getUserClient().getAppId();
-        String userId = messageContent.getUserClient().getUserId();
-        String friendUserId = messageContent.getFriendUserId();
-        ResponseVO<?> responseVO = this.messageCheckService.checkUserAndFriendship(appId, userId, friendUserId);
-        if (!responseVO.isOk()) {
-            ack(messageContent, responseVO);
-            return;
-        }
-        this.messageStoreService.storeP2PMessage(messageContent);
-        ack(messageContent, responseVO);
-        forwardMessageToSenderEndpoints(messageContent);
-        sendMessageToReceiverEndpoints(messageContent);
+        this.fixedMsgProcessThreadPool.execute(() -> {
+            this.messageStoreService.storeP2PMessage(messageContent);
+            ack(messageContent, ResponseVO.successResponse());
+            forwardMessageToSenderEndpoints(messageContent);
+            sendMessageToReceiverEndpoints(messageContent);
+        });
     }
 
     /**

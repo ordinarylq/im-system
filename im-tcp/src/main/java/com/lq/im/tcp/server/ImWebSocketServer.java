@@ -1,6 +1,7 @@
 package com.lq.im.tcp.server;
 
 import com.lq.im.codec.config.BootstrapConfig;
+import com.lq.im.tcp.server.handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -42,6 +43,8 @@ public class ImWebSocketServer {
                         pipeline.addLast("http-chunked", new ChunkedWriteHandler());
                         pipeline.addLast("aggregator", new HttpObjectAggregator(65535));
                         pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
+                        // todo WebScoketMessageDecoder, WebSocketMessageEncoder
+                        pipeline.addLast(new NettyServerHandler(config.getBrokerId(), config.getLogicUrl()));
                     }
                 });
     }

@@ -1,23 +1,25 @@
 package com.lq.im.service.message.service;
 
+import com.alibaba.fastjson.JSONObject;
+import com.lq.im.common.constant.Constants;
 import com.lq.im.common.enums.user.DelFlagEnum;
 import com.lq.im.common.model.message.GroupMessageContent;
 import com.lq.im.common.model.message.MessageContent;
+import com.lq.im.common.model.message.PeerToPeerMessageBodyDTO;
+import com.lq.im.common.model.message.PeerToPeerMessageStoreDTO;
 import com.lq.im.service.message.mapper.ImGroupMessageHistoryMapper;
 import com.lq.im.service.message.mapper.ImMessageBodyMapper;
 import com.lq.im.service.message.mapper.ImMessageHistoryMapper;
 import com.lq.im.service.message.model.ImGroupMessageHistoryDAO;
 import com.lq.im.service.message.model.ImMessageBodyDAO;
-import com.lq.im.service.message.model.ImMessageHistoryDAO;
 import com.lq.im.service.utils.SnowflakeIdWorker;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -31,6 +33,8 @@ public class MessageStoreService {
     private ImMessageBodyMapper imMessageBodyMapper;
     @Resource
     private SnowflakeIdWorker snowflakeIdWorker;
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
     /**
      * 写扩散
@@ -38,10 +42,14 @@ public class MessageStoreService {
     @Transactional
     public void storeP2PMessage(MessageContent messageContent) {
         ImMessageBodyDAO messageBody = getMessageBodyFrom(messageContent);
+        PeerToPeerMessageStoreDTO messageStoreDTO = new PeerToPeerMessageStoreDTO();
+        messageStoreDTO.setMessageContent(messageContent);
+        PeerToPeerMessageBodyDTO messageBodyDTO = new PeerToPeerMessageBodyDTO();
+        BeanUtils.copyProperties(messageBody, messageBodyDTO);
+        messageStoreDTO.setMessageBody(messageBodyDTO);
         messageContent.setMessageKey(messageBody.getMessageKey());
-        this.imMessageBodyMapper.insert(messageBody);
-        List<ImMessageHistoryDAO> msgHistory = getMessageHistoryFrom(messageContent);
-        this.imMessageHistoryMapper.insertBatchSomeColumn(msgHistory);
+        this.rabbitTemplate.convertAndSend(Constants.MessageQueueConstants.STORE_P2P_MESSAGE, "",
+                JSONObject.toJSONString(messageStoreDTO));
     }
 
     private ImMessageBodyDAO getMessageBodyFrom(MessageContent messageContent) {
@@ -58,22 +66,7 @@ public class MessageStoreService {
         return messageBodyDAO;
     }
 
-    private List<ImMessageHistoryDAO> getMessageHistoryFrom(MessageContent messageContent) {
-        List<ImMessageHistoryDAO> msgHistoryList = new ArrayList<>();
-        ImMessageHistoryDAO senderMessageHistory = new ImMessageHistoryDAO();
-        BeanUtils.copyProperties(messageContent, senderMessageHistory);
-        senderMessageHistory.setUserId(messageContent.getUserClient().getUserId());
-        senderMessageHistory.setOwnerId(messageContent.getUserClient().getUserId());
-        senderMessageHistory.setCreateTime(System.currentTimeMillis());
-        msgHistoryList.add(senderMessageHistory);
-        ImMessageHistoryDAO receiverMessageHistory = new ImMessageHistoryDAO();
-        BeanUtils.copyProperties(messageContent, receiverMessageHistory);
-        receiverMessageHistory.setUserId(messageContent.getUserClient().getUserId());
-        receiverMessageHistory.setOwnerId(messageContent.getFriendUserId());
-        receiverMessageHistory.setCreateTime(System.currentTimeMillis());
-        msgHistoryList.add(receiverMessageHistory);
-        return msgHistoryList;
-    }
+
 
     /**
      * 读扩散

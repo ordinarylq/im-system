@@ -11,6 +11,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.Resource;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableConfigurationProperties({ApplicationConfigProperties.class, HttpClientProperties.class})
@@ -63,5 +67,18 @@ public class ApplicationAutoConfiguration {
     @Bean
     public SnowflakeIdWorker snowflakeIdWorker() {
         return new SnowflakeIdWorker(0L, 0L);
+    }
+
+    @Bean
+    public ThreadPoolExecutor fixedMsgProcessThreadPool() {
+        return new ThreadPoolExecutor(
+                10,
+                10,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
     }
 }

@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/im-core?serverTimezone=GMT%2B8&useSSL=false&characterEncoding=UTF8&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+  redis:
+    host: 192.168.145.128
+    port: 6379
+    database: 0
+    password: 123456
+  rabbitmq:
+    host: 192.168.145.128
+    port: 5672
+    username: admin
+    password: 123456
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+        acknowledge-mode: MANUAL
+        prefetch: 1
+
+
+router:
+  zkHost: 192.168.145.128:2181
+  zkConnectTimeout: 5000
+

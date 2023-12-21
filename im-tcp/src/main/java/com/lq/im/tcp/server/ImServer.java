@@ -58,7 +58,7 @@ public class ImServer {
                         pipeline.addLast(new MessageEncoder());
 //                        pipeline.addLast(new IdleStateHandler(0, 0, 10));
                         pipeline.addLast(new HeartBeatHandler(config.getTimeout()));
-                        pipeline.addLast(new NettyServerHandler(config.getBrokerId()));
+                        pipeline.addLast(new NettyServerHandler(config.getBrokerId(), config.getLogicUrl()));
                     }
                 });
     }

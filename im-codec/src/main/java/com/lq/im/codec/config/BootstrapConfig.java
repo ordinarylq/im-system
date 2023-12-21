@@ -34,6 +34,10 @@ public class BootstrapConfig {
         private RedisConfig redis;
         private RabbitMQConfig rabbitmq;
         private ZooKeeperConfig zooKeeper;
+        /**
+         * 逻辑层ip:port
+         */
+        private String logicUrl;
     }
 
     @Data
