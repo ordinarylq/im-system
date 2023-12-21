@@ -5,9 +5,12 @@ import com.lq.im.codec.proto.ImServiceGroupMessage;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.group.GroupMemberRoleEnum;
 import com.lq.im.common.enums.message.MessageCommand;
+import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.common.model.message.GroupMessageContent;
 import com.lq.im.service.group.model.req.ImGroupMemberDTO;
 import com.lq.im.service.group.service.ImGroupMemberService;
+import com.lq.im.service.message.model.req.SendGroupMessageReq;
+import com.lq.im.service.message.model.resp.SendGroupMessageResp;
 import com.lq.im.service.utils.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -99,4 +102,19 @@ public class GroupMessageService {
         });
     }
 
+    public SendGroupMessageResp send(SendGroupMessageReq req) {
+        SendGroupMessageResp resp = new SendGroupMessageResp();
+        GroupMessageContent groupMessageContent = new GroupMessageContent();
+        BeanUtils.copyProperties(req, groupMessageContent);
+        UserClientDTO userClient = new UserClientDTO();
+        userClient.setAppId(req.getAppId());
+        userClient.setUserId(req.getUserId());
+        groupMessageContent.setUserClient(userClient);
+        this.messageStoreService.storeGroupMessage(groupMessageContent);
+        forwardMessageToSenderEndpoints(groupMessageContent);
+        sendMessageToReceiverEndpoints(groupMessageContent);
+        resp.setMessageKey(groupMessageContent.getMessageKey());
+        resp.setMessageTime(groupMessageContent.getMessageTime());
+        return resp;
+    }
 }
