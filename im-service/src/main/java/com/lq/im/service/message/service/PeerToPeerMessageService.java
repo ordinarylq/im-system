@@ -1,11 +1,13 @@
 package com.lq.im.service.message.service;
 
 import com.lq.im.codec.body.ChatMessageAck;
+import com.lq.im.codec.body.MessageReceiveServerAckContent;
 import com.lq.im.codec.proto.ImServiceMessage;
 import com.lq.im.common.ResponseVO;
 import com.lq.im.common.enums.message.MessageCommand;
 import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.common.model.message.MessageContent;
+import com.lq.im.common.model.message.MessageReceiveAckContent;
 import com.lq.im.service.message.model.req.SendPeerToPeerMessageReq;
 import com.lq.im.service.message.model.resp.SendPeerToPeerMessageResp;
 import com.lq.im.service.utils.MessageUtils;
@@ -14,6 +16,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
@@ -61,7 +64,7 @@ public class PeerToPeerMessageService {
         ImServiceMessage<Object> serviceMessage = new ImServiceMessage<>();
         BeanUtils.copyProperties(messageContent.getUserClient(), serviceMessage);
         serviceMessage.setCommand(MessageCommand.PEER_TO_PEER.getCommand());
-        serviceMessage.setData(messageContent.getMessageData());
+        serviceMessage.setData(messageContent);
         serviceMessage.setReceiverUserId(messageContent.getUserClient().getUserId());
         serviceMessage.setMessageId(messageContent.getMessageId());
         this.messageUtils.sendMessage(MessageCommand.PEER_TO_PEER, serviceMessage, messageContent.getUserClient());
@@ -71,11 +74,34 @@ public class PeerToPeerMessageService {
         ImServiceMessage<Object> serviceMessage = new ImServiceMessage<>();
         BeanUtils.copyProperties(messageContent.getUserClient(), serviceMessage);
         serviceMessage.setCommand(MessageCommand.PEER_TO_PEER.getCommand());
-        serviceMessage.setData(messageContent.getMessageData());
+        serviceMessage.setData(messageContent);
         serviceMessage.setReceiverUserId(messageContent.getFriendUserId());
         serviceMessage.setMessageId(messageContent.getMessageId());
-        this.messageUtils.sendMessageToAllDevicesOfOneUser(messageContent.getUserClient().getAppId(),
+        List<UserClientDTO> successList = this.messageUtils.sendMessageToAllDevicesOfOneUser(messageContent.getUserClient().getAppId(),
                 messageContent.getFriendUserId(), MessageCommand.PEER_TO_PEER, serviceMessage);
+        if (successList.isEmpty()) {
+            // 服务端需要发送接受确认ack给发送端
+            sendMessageAckFromServer(messageContent);
+        }
+    }
+
+    private void sendMessageAckFromServer(MessageContent messageContent) {
+        MessageReceiveServerAckContent ackContent = new MessageReceiveServerAckContent();
+        ackContent.setAppId(messageContent.getAppId());
+        ackContent.setUserId(messageContent.getFriendUserId());
+        ackContent.setFriendUserId(messageContent.getUserClient().getUserId());
+        ackContent.setMessageId(messageContent.getMessageId());
+        ackContent.setMessageKey(messageContent.getMessageKey());
+        ackContent.setServerSend(true);
+
+        ImServiceMessage<MessageReceiveServerAckContent> serviceMessage = new ImServiceMessage<>();
+        serviceMessage.setData(ackContent);
+        BeanUtils.copyProperties(messageContent.getUserClient(), serviceMessage);
+        serviceMessage.setMessageId(messageContent.getMessageId());
+        serviceMessage.setCommand(MessageCommand.MESSAGE_RECEIVE_ACK.getCommand());
+
+        this.messageUtils.sendMessageToOneDevice(MessageCommand.MESSAGE_RECEIVE_ACK, serviceMessage,
+                messageContent.getUserClient());
     }
 
     public SendPeerToPeerMessageResp send(SendPeerToPeerMessageReq req) {
@@ -93,4 +119,10 @@ public class PeerToPeerMessageService {
         sendMessageToReceiverEndpoints(messageContent);
         return resp;
     }
+
+    public void receiveMark(MessageReceiveAckContent content) {
+        this.messageUtils.sendMessageToAllDevicesOfOneUser(content.getAppId(),
+                content.getFriendUserId(), MessageCommand.MESSAGE_RECEIVE_ACK, content);
+    }
+
 }

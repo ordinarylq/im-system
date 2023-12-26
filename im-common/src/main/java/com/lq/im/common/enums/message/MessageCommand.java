@@ -15,7 +15,12 @@ public enum MessageCommand implements Command {
     /**
      * 消息确认 0D1001
      */
-    MESSAGE_ACK(0x03E9)
+    MESSAGE_ACK(0x03E9),
+
+    /**
+     * 消息收到确认 0D1003
+     */
+    MESSAGE_RECEIVE_ACK(0x03EB),
 
     ;
     private final int command;

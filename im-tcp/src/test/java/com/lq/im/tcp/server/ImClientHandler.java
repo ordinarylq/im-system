@@ -22,7 +22,7 @@ import java.util.UUID;
 public class ImClientHandler extends ChannelInboundHandlerAdapter {
     private byte[] imei;
 
-    private final String userId = "test004";
+    private final String userId = "test003";
     private final Integer clientType = 5;
     private final Integer appId = 1000;
 
@@ -85,7 +85,16 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
             } else if (serviceMessage.getCommand() == MessageCommand.PEER_TO_PEER.getCommand()) {
                 // 单聊
                 JSONObject jsonObject = (JSONObject) JSONObject.toJSON(serviceMessage.getData());
-                System.out.format("%n[%s]: [%s]%n", jsonObject.getString("userId"), jsonObject.getString("data"));
+                JSONObject messageContentJsonObject = jsonObject.getJSONObject("data");
+                System.out.format("%n[%s]: [%s]%n", jsonObject.getString("userId"),
+                        messageContentJsonObject.getString("messageData"));
+                log.info("detail message: {}", serviceMessage.getData());
+                sendMessageAck(serviceMessage, ctx);
+            } else if (serviceMessage.getCommand() == MessageCommand.MESSAGE_RECEIVE_ACK.getCommand()) {
+                // 接收方单聊消息确认
+                JSONObject jsonObject = (JSONObject) JSONObject.toJSON(serviceMessage.getData());
+                System.out.format("%n接收到[%s]发送的接收消息ACK: messageKey[%d]%n", jsonObject.getString("userId"),
+                        jsonObject.getLong("messageKey"));
                 log.info("detail message: {}", serviceMessage.getData());
             } else if (serviceMessage.getCommand() == MessageCommand.PEER_TO_GROUP.getCommand()) {
                 // 群聊
@@ -96,5 +105,42 @@ public class ImClientHandler extends ChannelInboundHandlerAdapter {
                 log.info("detail message: {}", serviceMessage.getData());
             }
         }
+    }
+
+    private void sendMessageAck(ImServiceMessage<?> serviceMessage, ChannelHandlerContext ctx) {
+        JSONObject jsonObject = (JSONObject) JSONObject.toJSON(serviceMessage.getData());
+        JSONObject messageContentJsonObject = jsonObject.getJSONObject("data");
+        Long messageKey = messageContentJsonObject.getLong("messageKey");
+        JSONObject ackJsonObject = new JSONObject();
+        ackJsonObject.put("appId", serviceMessage.getAppId());
+        ackJsonObject.put("messageSequence", jsonObject.getString("messageId"));
+        ackJsonObject.put("userId", jsonObject.getString("receiverUserId"));
+        ackJsonObject.put("friendUserId", jsonObject.getString("userId"));
+        ackJsonObject.put("messageKey", messageKey);
+        sendMsg(ackJsonObject.toString().getBytes(StandardCharsets.UTF_8),
+                MessageCommand.MESSAGE_RECEIVE_ACK.getCommand(), ctx);
+    }
+
+    private void sendMsg(byte[] data, Integer command, ChannelHandlerContext ctx) {
+        ByteBuf buffer = ctx.alloc().buffer();
+        // command-1000
+        buffer.writeInt(command)
+                // version-1
+                .writeInt(1)
+                // clientType-5
+                .writeInt(clientType)
+                // appId-1000
+                .writeInt(appId)
+                // messageType-0
+                .writeInt(0x0)
+                // imei length
+                .writeInt(imei.length)
+                // data length
+                .writeInt(data.length);
+        // imei
+        buffer.writeBytes(imei);
+        // data
+        buffer.writeBytes(data);
+        ctx.writeAndFlush(buffer);
     }
 }

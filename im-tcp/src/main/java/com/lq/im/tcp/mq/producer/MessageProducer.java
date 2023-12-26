@@ -39,7 +39,8 @@ public class MessageProducer {
     }
 
     private static boolean isPeerToPeerMessage(Integer command) {
-        return command == MessageCommand.PEER_TO_PEER.getCommand();
+        return command == MessageCommand.PEER_TO_PEER.getCommand()
+                || command == MessageCommand.MESSAGE_RECEIVE_ACK.getCommand();
     }
     private static boolean isPeerToGroupMessage(Integer command) {
         return command == MessageCommand.PEER_TO_GROUP.getCommand();

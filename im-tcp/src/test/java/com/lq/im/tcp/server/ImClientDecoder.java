@@ -38,7 +38,8 @@ public class ImClientDecoder extends ByteToMessageDecoder {
         } else if (command == MessageCommand.MESSAGE_ACK.getCommand()) {
             ImServiceMessage<?> message = JSON.parseObject(new String(data), ImServiceMessage.class);
             out.add(message);
-        } else if (command == MessageCommand.PEER_TO_PEER.getCommand()) {
+        } else if (command == MessageCommand.PEER_TO_PEER.getCommand()
+                || command == MessageCommand.MESSAGE_RECEIVE_ACK.getCommand()) {
             ImServiceMessage<?> message = JSON.parseObject(new String(data), ImServiceMessage.class);
             out.add(message);
         } else if (command == MessageCommand.PEER_TO_GROUP.getCommand()) {

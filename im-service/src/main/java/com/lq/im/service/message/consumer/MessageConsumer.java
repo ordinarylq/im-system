@@ -5,6 +5,7 @@ import static com.lq.im.common.constant.Constants.*;
 import com.alibaba.fastjson.JSONObject;
 import com.lq.im.common.enums.message.MessageCommand;
 import com.lq.im.common.model.message.MessageContent;
+import com.lq.im.common.model.message.MessageReceiveAckContent;
 import com.lq.im.service.message.service.PeerToPeerMessageService;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,9 @@ public class MessageConsumer {
             if (command == MessageCommand.PEER_TO_PEER.getCommand()) {
                 MessageContent messageContent = jsonObject.toJavaObject(MessageContent.class);
                 this.peerToPeerMessageService.process(messageContent);
+            } else if (command == MessageCommand.MESSAGE_RECEIVE_ACK.getCommand()) {
+                MessageReceiveAckContent receiveAckContent = jsonObject.toJavaObject(MessageReceiveAckContent.class);
+                this.peerToPeerMessageService.receiveMark(receiveAckContent);
             }
             channel.basicAck(deliveryTag, false);
         } catch (Exception e) {

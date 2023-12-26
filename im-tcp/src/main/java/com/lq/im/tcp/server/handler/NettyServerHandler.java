@@ -79,6 +79,11 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
     }
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        SessionHandler.offline((NioSocketChannel) ctx.channel());
+    }
+
+    @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error("An error occurred: {}", cause.getMessage());
         log.error("Removing problematic channel");
