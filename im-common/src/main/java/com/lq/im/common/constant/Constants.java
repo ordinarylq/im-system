@@ -51,6 +51,7 @@ public class Constants {
         public static final String FRIENDSHIP_SERVICE_TO_IM = "friendshipServiceToPipeline";
 
         public static final String STORE_P2P_MESSAGE = "storePeerToPeerMessage";
+        public static final String STORE_GROUP_MESSAGE = "storeGroupMessage";
     }
 
     public static class ZkConstants {

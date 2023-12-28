@@ -7,6 +7,6 @@ public class PeerToPeerMessageStoreDTO {
 
     private MessageContent messageContent;
 
-    private PeerToPeerMessageBodyDTO messageBody;
+    private MessageBodyDTO messageBody;
 
 }

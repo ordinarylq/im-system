@@ -1,6 +1,7 @@
 package com.lq.im.service.message.controller;
 
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.model.message.SendGroupMessageCheckReq;
 import com.lq.im.common.model.message.SendMessageCheckReq;
 import com.lq.im.service.message.model.req.SendGroupMessageReq;
 import com.lq.im.service.message.model.req.SendPeerToPeerMessageReq;
@@ -40,6 +41,11 @@ public class MessageController {
     @PostMapping("/p2p/check")
     public ResponseVO<?> checkPeerToPeerMessage(@RequestBody @Valid SendMessageCheckReq req) {
         return this.messageCheckService.checkUserAndFriendship(req.getAppId(), req.getUserId(), req.getFriendUserId());
+    }
+
+    @PostMapping("/group/check")
+    public ResponseVO<?> checkGroupMessage(@RequestBody @Valid SendGroupMessageCheckReq req) {
+        return this.messageCheckService.canGroupMemberSendMessage(req.getAppId(), req.getUserId(), req.getGroupId());
     }
 
 }

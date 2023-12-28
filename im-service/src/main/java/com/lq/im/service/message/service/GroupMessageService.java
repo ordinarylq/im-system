@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Service
@@ -31,6 +32,8 @@ public class GroupMessageService {
     private ImGroupMemberService imGroupMemberService;
     @Resource
     private MessageStoreService messageStoreService;
+    @Resource(name = "groupMessageProcessThreadPool")
+    private ThreadPoolExecutor groupMsgProcessThreadPool;
 
 
     public void process(GroupMessageContent groupMessageContent) {

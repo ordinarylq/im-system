@@ -3,7 +3,7 @@ package com.lq.im.common.model.message;
 import lombok.Data;
 
 @Data
-public class PeerToPeerMessageBodyDTO {
+public class MessageBodyDTO {
     private Integer appId;
 
     private Long messageKey;

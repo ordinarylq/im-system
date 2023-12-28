@@ -21,6 +21,10 @@ public enum MessageCommand implements Command {
      * 消息收到确认 0D1003
      */
     MESSAGE_RECEIVE_ACK(0x03EB),
+    /**
+     * 群聊消息确认 0D1004
+     */
+    GROUP_MESSAGE_ACK(0x03EC),
 
     ;
     private final int command;

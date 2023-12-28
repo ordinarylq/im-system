@@ -1,8 +1,12 @@
 package com.lq.im.message.service;
 
+import com.lq.im.common.model.message.GroupMessageContent;
 import com.lq.im.common.model.message.MessageContent;
+import com.lq.im.message.mapper.ImGroupMessageHistoryMapper;
 import com.lq.im.message.mapper.ImMessageBodyMapper;
 import com.lq.im.message.mapper.ImMessageHistoryMapper;
+import com.lq.im.message.model.GroupMessageStoreDTO;
+import com.lq.im.message.model.ImGroupMessageHistoryDAO;
 import com.lq.im.message.model.ImMessageHistoryDAO;
 import com.lq.im.message.model.PeerToPeerMessageStoreDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +24,10 @@ public class StoreMessageService {
 
     @Resource
     private ImMessageHistoryMapper imMessageHistoryMapper;
-
     @Resource
     private ImMessageBodyMapper imMessageBodyMapper;
+    @Resource
+    private ImGroupMessageHistoryMapper imGroupMessageHistoryMapper;
 
     @Transactional
     public void storeP2PMessage(PeerToPeerMessageStoreDTO messageStoreDTO) {
@@ -48,4 +53,19 @@ public class StoreMessageService {
         return msgHistoryList;
     }
 
+    @Transactional
+    public void storeGroupMessage(GroupMessageStoreDTO groupMessageStoreDTO) {
+        this.imMessageBodyMapper.insert(groupMessageStoreDTO.getGroupMessageBodyDAO());
+        ImGroupMessageHistoryDAO groupMessageHistory =
+                getGroupMessageHistoryFrom(groupMessageStoreDTO.getGroupMessageContent());
+        this.imGroupMessageHistoryMapper.insert(groupMessageHistory);
+    }
+
+    private ImGroupMessageHistoryDAO getGroupMessageHistoryFrom(GroupMessageContent groupMessageContent) {
+        ImGroupMessageHistoryDAO groupMsgHistoryDAO = new ImGroupMessageHistoryDAO();
+        BeanUtils.copyProperties(groupMessageContent, groupMsgHistoryDAO);
+        groupMsgHistoryDAO.setUserId(groupMessageContent.getUserClient().getUserId());
+        groupMsgHistoryDAO.setCreateTime(System.currentTimeMillis());
+        return groupMsgHistoryDAO;
+    }
 }

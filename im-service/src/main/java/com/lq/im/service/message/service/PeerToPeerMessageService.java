@@ -29,8 +29,8 @@ public class PeerToPeerMessageService {
     private MessageUtils messageUtils;
     @Resource
     private MessageStoreService messageStoreService;
-    @Resource
-    private ThreadPoolExecutor fixedMsgProcessThreadPool;
+    @Resource(name = "p2pMessageProcessThreadPool")
+    private ThreadPoolExecutor msgProcessThreadPool;
     @Resource
     private RedisSequenceService redisSequenceService;
 
@@ -38,7 +38,7 @@ public class PeerToPeerMessageService {
         MessageContent messageFromCache = this.messageStoreService.getMessageFromCache(messageContent.getAppId(), messageContent.getMessageId());
         if (messageFromCache != null) {
             // cache hit
-            this.fixedMsgProcessThreadPool.execute(() -> {
+            this.msgProcessThreadPool.execute(() -> {
                 ack(messageContent, ResponseVO.successResponse());
                 forwardMessageToSenderEndpoints(messageFromCache);
                 sendMessageToReceiverEndpoints(messageFromCache);
@@ -51,7 +51,7 @@ public class PeerToPeerMessageService {
                 messageContent.getFriendUserId());
         Long sequence = this.redisSequenceService.getSequence(sequenceKey);
         messageContent.setSequence(sequence);
-        this.fixedMsgProcessThreadPool.execute(() -> {
+        this.msgProcessThreadPool.execute(() -> {
             this.messageStoreService.storeP2PMessage(messageContent);
             ack(messageContent, ResponseVO.successResponse());
             forwardMessageToSenderEndpoints(messageContent);

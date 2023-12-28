@@ -69,8 +69,21 @@ public class ApplicationAutoConfiguration {
         return new SnowflakeIdWorker(0L, 0L);
     }
 
-    @Bean
+    @Bean("p2pMessageProcessThreadPool")
     public ThreadPoolExecutor fixedMsgProcessThreadPool() {
+        return new ThreadPoolExecutor(
+                10,
+                10,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+    }
+
+    @Bean("groupMessageProcessThreadPool")
+    public ThreadPoolExecutor fixedGroupMsgProcessThreadPool() {
         return new ThreadPoolExecutor(
                 10,
                 10,
