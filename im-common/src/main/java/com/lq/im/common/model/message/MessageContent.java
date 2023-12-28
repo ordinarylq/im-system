@@ -26,4 +26,6 @@ public class MessageContent {
 
     private String extra;
 
+    private Long sequence;
+
 }

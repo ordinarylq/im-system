@@ -4,12 +4,14 @@ import com.lq.im.codec.body.ChatMessageAck;
 import com.lq.im.codec.body.MessageReceiveServerAckContent;
 import com.lq.im.codec.proto.ImServiceMessage;
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.constant.Constants;
 import com.lq.im.common.enums.message.MessageCommand;
 import com.lq.im.common.model.UserClientDTO;
 import com.lq.im.common.model.message.MessageContent;
 import com.lq.im.common.model.message.MessageReceiveAckContent;
 import com.lq.im.service.message.model.req.SendPeerToPeerMessageReq;
 import com.lq.im.service.message.model.resp.SendPeerToPeerMessageResp;
+import com.lq.im.service.utils.MessageSequenceUtils;
 import com.lq.im.service.utils.MessageUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -29,9 +31,16 @@ public class PeerToPeerMessageService {
     private MessageStoreService messageStoreService;
     @Resource
     private ThreadPoolExecutor fixedMsgProcessThreadPool;
+    @Resource
+    private RedisSequenceService redisSequenceService;
 
     public void process(MessageContent messageContent) {
         this.fixedMsgProcessThreadPool.execute(() -> {
+            String sequenceKey = messageContent.getAppId() + ":" + Constants.RedisConstants.MESSAGE_SEQUENCE + ":"
+                    + MessageSequenceUtils.getPeerToPeerRedisKey(messageContent.getUserClient().getUserId(),
+                    messageContent.getFriendUserId());
+            Long sequence = this.redisSequenceService.getSequence(sequenceKey);
+            messageContent.setSequence(sequence);
             this.messageStoreService.storeP2PMessage(messageContent);
             ack(messageContent, ResponseVO.successResponse());
             forwardMessageToSenderEndpoints(messageContent);
@@ -50,7 +59,7 @@ public class PeerToPeerMessageService {
         serviceMessage.setCommand(MessageCommand.MESSAGE_ACK.getCommand());
         log.info("msg ack, msgId={}, checkResult={}", messageContent.getMessageId(), serviceMessage);
         // 1. 建立响应对象
-        ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId());
+        ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId(), messageContent.getSequence());
         responseVO.setData(chatMessageAck);
         // 2. 发给消息发送方
         this.messageUtils.sendMessageToOneDevice(MessageCommand.MESSAGE_ACK, serviceMessage,
