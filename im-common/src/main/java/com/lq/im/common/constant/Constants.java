@@ -28,6 +28,8 @@ public class Constants {
         public static final String USER_SIGNATURE = REDIS_KEY_SEPARATOR + "userSignature" + REDIS_KEY_SEPARATOR;
 
         public static final String MESSAGE_SEQUENCE = "messageSeq";
+
+        public static final String CACHE_MESSAGE = "cacheMessage";
     }
 
     public static class MessageQueueConstants {

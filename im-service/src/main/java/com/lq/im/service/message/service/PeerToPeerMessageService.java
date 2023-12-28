@@ -35,16 +35,28 @@ public class PeerToPeerMessageService {
     private RedisSequenceService redisSequenceService;
 
     public void process(MessageContent messageContent) {
+        MessageContent messageFromCache = this.messageStoreService.getMessageFromCache(messageContent.getAppId(), messageContent.getMessageId());
+        if (messageFromCache != null) {
+            // cache hit
+            this.fixedMsgProcessThreadPool.execute(() -> {
+                ack(messageContent, ResponseVO.successResponse());
+                forwardMessageToSenderEndpoints(messageFromCache);
+                sendMessageToReceiverEndpoints(messageFromCache);
+            });
+            return;
+        }
+        // no cache
+        String sequenceKey = messageContent.getAppId() + ":" + Constants.RedisConstants.MESSAGE_SEQUENCE + ":"
+                + MessageSequenceUtils.getPeerToPeerRedisKey(messageContent.getUserClient().getUserId(),
+                messageContent.getFriendUserId());
+        Long sequence = this.redisSequenceService.getSequence(sequenceKey);
+        messageContent.setSequence(sequence);
         this.fixedMsgProcessThreadPool.execute(() -> {
-            String sequenceKey = messageContent.getAppId() + ":" + Constants.RedisConstants.MESSAGE_SEQUENCE + ":"
-                    + MessageSequenceUtils.getPeerToPeerRedisKey(messageContent.getUserClient().getUserId(),
-                    messageContent.getFriendUserId());
-            Long sequence = this.redisSequenceService.getSequence(sequenceKey);
-            messageContent.setSequence(sequence);
             this.messageStoreService.storeP2PMessage(messageContent);
             ack(messageContent, ResponseVO.successResponse());
             forwardMessageToSenderEndpoints(messageContent);
             sendMessageToReceiverEndpoints(messageContent);
+            this.messageStoreService.storeMessageToCache(messageContent);
         });
     }
 

@@ -14,12 +14,15 @@ import com.lq.im.service.message.model.ImGroupMessageHistoryDAO;
 import com.lq.im.service.message.model.ImMessageBodyDAO;
 import com.lq.im.service.utils.SnowflakeIdWorker;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -35,6 +38,8 @@ public class MessageStoreService {
     private SnowflakeIdWorker snowflakeIdWorker;
     @Resource
     private RabbitTemplate rabbitTemplate;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 写扩散
@@ -66,8 +71,6 @@ public class MessageStoreService {
         return messageBodyDAO;
     }
 
-
-
     /**
      * 读扩散
      */
@@ -86,5 +89,31 @@ public class MessageStoreService {
         groupMsgHistoryDAO.setUserId(groupMessageContent.getUserClient().getUserId());
         groupMsgHistoryDAO.setCreateTime(System.currentTimeMillis());
         return groupMsgHistoryDAO;
+    }
+
+    /**
+     * 存储消息(包括messageId)到Redis
+     * 消息发送方可能会重复发送消息，使用缓存来去重
+     */
+    public void storeMessageToCache(MessageContent messageContent) {
+        String key = getMessageCacheKey(messageContent.getAppId(), messageContent.getMessageId());
+        this.stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent),
+                300, TimeUnit.SECONDS);
+    }
+
+    /**
+     * 从缓存中获取消息
+     */
+    public MessageContent getMessageFromCache(Integer appId, String messageId) {
+        String key = getMessageCacheKey(appId, messageId);
+        String message = this.stringRedisTemplate.opsForValue().get(key);
+        if (StringUtils.isEmpty(message)) {
+            return null;
+        }
+        return JSONObject.parseObject(message, MessageContent.class);
+    }
+
+    private String getMessageCacheKey(Integer appId, String messageId) {
+        return appId + ":" + Constants.RedisConstants.CACHE_MESSAGE + ":" + messageId;
     }
 }
