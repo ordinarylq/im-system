@@ -29,6 +29,8 @@ public class Constants {
 
         public static final String MESSAGE_SEQUENCE = "messageSeq";
 
+        public static final String GROUP_MESSAGE_SEQUENCE = "groupMessageSeq";
+
         public static final String CACHE_MESSAGE = "cacheMessage";
     }
 

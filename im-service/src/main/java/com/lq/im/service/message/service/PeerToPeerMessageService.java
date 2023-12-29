@@ -35,7 +35,8 @@ public class PeerToPeerMessageService {
     private RedisSequenceService redisSequenceService;
 
     public void process(MessageContent messageContent) {
-        MessageContent messageFromCache = this.messageStoreService.getMessageFromCache(messageContent.getAppId(), messageContent.getMessageId());
+        MessageContent messageFromCache = this.messageStoreService.getMessageFromCache(
+                messageContent.getAppId(), messageContent.getMessageId(), MessageContent.class);
         if (messageFromCache != null) {
             // cache hit
             this.msgProcessThreadPool.execute(() -> {
@@ -56,7 +57,7 @@ public class PeerToPeerMessageService {
             ack(messageContent, ResponseVO.successResponse());
             forwardMessageToSenderEndpoints(messageContent);
             sendMessageToReceiverEndpoints(messageContent);
-            this.messageStoreService.storeMessageToCache(messageContent);
+            this.messageStoreService.storeMessageToCache(messageContent.getAppId(), messageContent.getMessageId(), messageContent);
         });
     }
 

@@ -3,6 +3,7 @@ package com.lq.im.service.message.service;
 import com.lq.im.codec.body.ChatMessageAck;
 import com.lq.im.codec.proto.ImServiceGroupMessage;
 import com.lq.im.common.ResponseVO;
+import com.lq.im.common.constant.Constants;
 import com.lq.im.common.enums.group.GroupMemberRoleEnum;
 import com.lq.im.common.enums.message.MessageCommand;
 import com.lq.im.common.model.UserClientDTO;
@@ -34,21 +35,35 @@ public class GroupMessageService {
     private MessageStoreService messageStoreService;
     @Resource(name = "groupMessageProcessThreadPool")
     private ThreadPoolExecutor groupMsgProcessThreadPool;
+    @Resource
+    private RedisSequenceService redisSequenceService;
 
 
     public void process(GroupMessageContent groupMessageContent) {
-        Integer appId = groupMessageContent.getUserClient().getAppId();
-        String userId = groupMessageContent.getUserClient().getUserId();
-        String groupId = groupMessageContent.getGroupId();
-        ResponseVO<?> responseVO = this.messageCheckService.canGroupMemberSendMessage(appId, userId, groupId);
-        if (!responseVO.isOk()) {
-            ack(groupMessageContent, responseVO);
+        GroupMessageContent messageFromCache = this.messageStoreService.getMessageFromCache(
+                groupMessageContent.getAppId(), groupMessageContent.getMessageId(), GroupMessageContent.class);
+        if (messageFromCache != null) {
+            // cache hit
+            this.groupMsgProcessThreadPool.execute(() -> {
+                ack(groupMessageContent, ResponseVO.successResponse());
+                forwardMessageToSenderEndpoints(messageFromCache);
+                sendMessageToReceiverEndpoints(messageFromCache);
+            });
             return;
         }
-        this.messageStoreService.storeGroupMessage(groupMessageContent);
-        ack(groupMessageContent, responseVO);
-        forwardMessageToSenderEndpoints(groupMessageContent);
-        sendMessageToReceiverEndpoints(groupMessageContent);
+        // no cache
+        String sequenceKey = groupMessageContent.getAppId() + ":" + Constants.RedisConstants.GROUP_MESSAGE_SEQUENCE
+                + groupMessageContent.getGroupId();
+        Long sequence = this.redisSequenceService.getSequence(sequenceKey);
+        groupMessageContent.setSequence(sequence);
+        this.groupMsgProcessThreadPool.execute(() -> {
+            this.messageStoreService.storeGroupMessage(groupMessageContent);
+            ack(groupMessageContent, ResponseVO.successResponse());
+            forwardMessageToSenderEndpoints(groupMessageContent);
+            sendMessageToReceiverEndpoints(groupMessageContent);
+            this.messageStoreService.storeMessageToCache(groupMessageContent.getAppId(),
+                    groupMessageContent.getMessageId(), groupMessageContent);
+        });
     }
 
     /**
@@ -59,12 +74,12 @@ public class GroupMessageService {
         serviceMessage.setData(responseVO);
         BeanUtils.copyProperties(groupMessageContent.getUserClient(), serviceMessage);
         serviceMessage.setMessageId(groupMessageContent.getMessageId());
-        serviceMessage.setCommand(MessageCommand.MESSAGE_ACK.getCommand());
+        serviceMessage.setCommand(MessageCommand.GROUP_MESSAGE_ACK.getCommand());
         serviceMessage.setGroupId(groupMessageContent.getGroupId());
         log.info("msg ack, msgId={}, checkResult={}", groupMessageContent.getMessageId(), serviceMessage);
         ChatMessageAck chatMessageAck = new ChatMessageAck(groupMessageContent.getMessageId());
         responseVO.setData(chatMessageAck);
-        this.messageUtils.sendMessageToOneDevice(MessageCommand.MESSAGE_ACK, serviceMessage,
+        this.messageUtils.sendMessageToOneDevice(MessageCommand.GROUP_MESSAGE_ACK, serviceMessage,
                 groupMessageContent.getUserClient());
     }
 

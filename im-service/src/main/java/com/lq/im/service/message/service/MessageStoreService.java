@@ -72,22 +72,22 @@ public class MessageStoreService {
      * 存储消息(包括messageId)到Redis
      * 消息发送方可能会重复发送消息，使用缓存来去重
      */
-    public void storeMessageToCache(MessageContent messageContent) {
-        String key = getMessageCacheKey(messageContent.getAppId(), messageContent.getMessageId());
-        this.stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent),
+    public void storeMessageToCache(Integer appId, String messageId, Object object) {
+        String key = getMessageCacheKey(appId, messageId);
+        this.stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(object),
                 300, TimeUnit.SECONDS);
     }
 
     /**
      * 从缓存中获取消息
      */
-    public MessageContent getMessageFromCache(Integer appId, String messageId) {
+    public <T> T getMessageFromCache(Integer appId, String messageId, Class<T> aClass) {
         String key = getMessageCacheKey(appId, messageId);
         String message = this.stringRedisTemplate.opsForValue().get(key);
         if (StringUtils.isEmpty(message)) {
             return null;
         }
-        return JSONObject.parseObject(message, MessageContent.class);
+        return JSONObject.parseObject(message, aClass);
     }
 
     private String getMessageCacheKey(Integer appId, String messageId) {
