@@ -70,7 +70,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
         if(singleUserInfo == null || !singleUserInfo.isOk()) {
             // 不存在则返回用户不存在
-            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
 
         // 2. 先判断分组是否存在
@@ -85,7 +85,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
             ResponseVO<ImUserDAO> friendUserInfo = this.imUserService.getSingleUserInfo(friendUserId, req.getAppId());
             if(friendUserInfo == null || !friendUserInfo.isOk()) {
                 resp.getFailUserItemList().add(new AddFriendshipGroupMemberResp.ResultItem(
-                        friendUserId, UserErrorCodeEnum.USER_IS_NOT_EXIST.getError()));
+                        friendUserId, UserErrorCodeEnum.USER_NOT_EXIST.getError()));
                 continue;
             }
             // 2.2 好友存在则执行插入
@@ -121,7 +121,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
         if(singleUserInfo == null || !singleUserInfo.isOk()) {
             // 不存在则返回用户不存在
-            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
 
         // 2. 先判断分组是否存在
@@ -137,7 +137,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
             ResponseVO<ImUserDAO> friendUserInfo = this.imUserService.getSingleUserInfo(friendUserId, req.getAppId());
             if(friendUserInfo == null || !friendUserInfo.isOk()) {
                 resp.getFailUserItemList().add(new RemoveFriendshipGroupMemberResp.ResultItem(
-                        friendUserId, UserErrorCodeEnum.USER_IS_NOT_EXIST.getError()));
+                        friendUserId, UserErrorCodeEnum.USER_NOT_EXIST.getError()));
                 continue;
             }
             // 2.2 好友存在则执行删除

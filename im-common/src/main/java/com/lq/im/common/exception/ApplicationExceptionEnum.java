@@ -11,8 +11,8 @@ public interface ApplicationExceptionEnum {
     int TOO_MUCH_DATA_CODE = 20000;
     String TOO_MUCH_DATA_MESSAGE = "导入数量超出上限";
 
-    int USER_IS_NOT_EXIST_CODE = 20001;
-    String USER_IS_NOT_EXIST_MESSAGE = "用户不存在";
+    int USER_NOT_EXIST_CODE = 20001;
+    String USER_NOT_EXIST_MESSAGE = "用户不存在";
 
     int SERVER_GET_USER_ERROR_CODE = 20002;
     String SERVER_GET_USER_ERROR_MESSAGE = "服务获取用户失败";

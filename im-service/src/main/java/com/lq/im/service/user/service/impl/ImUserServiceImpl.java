@@ -49,11 +49,10 @@ public class ImUserServiceImpl implements ImUserService {
         if (req.getUserList().size() > 100) {
             return ResponseVO.errorResponse(UserErrorCodeEnum.TOO_MUCH_DATA);
         }
-
         ImportUserResp resp = new ImportUserResp();
         req.getUserList().forEach(user -> {
             try {
-                processImportedUser(user, req.getAppId(), resp);
+                doImportUser(user, req.getAppId(), resp);
             } catch (Exception e) {
                 log.error(ERROR_MESSAGE, e);
                 resp.getFailUserIdList().add(user.getUserId());
@@ -62,14 +61,12 @@ public class ImUserServiceImpl implements ImUserService {
         return ResponseVO.successResponse(resp);
     }
 
-    private void processImportedUser(ImUserDAO user, Integer appId, ImportUserResp resp) {
+    private void doImportUser(ImUserDAO user, Integer appId, ImportUserResp resp) {
         user.setAppId(appId);
         int insertResult = this.imUserMapper.insert(user);
         if (insertResult == 1) {
-            // 插入成功
             resp.getSuccessUserIdList().add(user.getUserId());
         } else {
-            // 插入失败
             resp.getFailUserIdList().add(user.getUserId());
         }
     }
@@ -102,7 +99,7 @@ public class ImUserServiceImpl implements ImUserService {
                 .eq("del_flag", DelFlagEnum.NORMAL.getCode());
         ImUserDAO imUserDAO = this.imUserMapper.selectOne(wrapper);
         if(imUserDAO == null) {
-            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
         return ResponseVO.successResponse(imUserDAO);
     }
@@ -120,7 +117,6 @@ public class ImUserServiceImpl implements ImUserService {
             wrapper.eq("user_id", userId)
                     .eq("app_id", req.getAppId())
                     .eq("del_flag", DelFlagEnum.NORMAL.getCode());
-
             try {
                 int updateResult = this.imUserMapper.update(imUserDAO, wrapper);
                 if (updateResult > 0) {
@@ -133,7 +129,6 @@ public class ImUserServiceImpl implements ImUserService {
                 resp.getFailUserIdList().add(userId);
             }
         });
-
         return ResponseVO.successResponse(resp);
     }
 
@@ -145,7 +140,7 @@ public class ImUserServiceImpl implements ImUserService {
                 .eq("del_flag", DelFlagEnum.NORMAL.getCode());
         ImUserDAO imUserDAO = this.imUserMapper.selectOne(wrapper);
         if(imUserDAO == null) {
-            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
         ImUserDAO userDAO = new ImUserDAO();
         BeanUtils.copyProperties(req, userDAO);

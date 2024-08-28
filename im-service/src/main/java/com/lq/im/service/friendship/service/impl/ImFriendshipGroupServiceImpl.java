@@ -47,7 +47,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
         // 1. 首先判断用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
         if(singleUserInfo == null || !singleUserInfo.isOk()) {
-            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
         // 2. 若存在则先查询指定分组名称的分组是否存在
         QueryWrapper<ImFriendshipGroupDAO> queryWrapper = new QueryWrapper<>();
@@ -113,7 +113,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
         // 1. 首先判断用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
         if(singleUserInfo == null || !singleUserInfo.isOk()) {
-            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
 
         DeleteFriendshipGroupResp resp = new DeleteFriendshipGroupResp();
@@ -155,7 +155,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
         // 1. 首先判断用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(userId, appId);
         if(singleUserInfo == null || !singleUserInfo.isOk()) {
-            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_IS_NOT_EXIST);
+            return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
         QueryWrapper<ImFriendshipGroupDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("app_id", appId)
