@@ -46,7 +46,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
     public ResponseVO<?> addGroup(AddFriendshipGroupReq req) {
         // 1. 首先判断用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
-        if(singleUserInfo == null || !singleUserInfo.isOk()) {
+        if (singleUserInfo == null || !singleUserInfo.isOk()) {
             return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
         // 2. 若存在则先查询指定分组名称的分组是否存在
@@ -56,18 +56,19 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
                 .eq("group_name", req.getGroupName());
         ImFriendshipGroupDAO imFriendshipGroupDAO = this.imFriendshipGroupMapper.selectOne(queryWrapper);
         ImFriendshipGroupDAO groupDAO;
-        if(imFriendshipGroupDAO == null) {
+        long currentTime = System.currentTimeMillis();
+        if (imFriendshipGroupDAO == null) {
             // 2.1 若不存在则插入数据
             groupDAO = new ImFriendshipGroupDAO();
             groupDAO.setGroupName(req.getGroupName());
             groupDAO.setDelFlag(DelFlagEnum.NORMAL.getCode());
             groupDAO.setAppId(req.getAppId());
             groupDAO.setUserId(req.getUserId());
-            groupDAO.setCreateTime(System.currentTimeMillis());
-            groupDAO.setUpdateTime(System.currentTimeMillis());
+            groupDAO.setCreateTime(currentTime);
+            groupDAO.setUpdateTime(currentTime);
 
             int insert = this.imFriendshipGroupMapper.insert(groupDAO);
-            if(insert != 1) {
+            if (insert != 1) {
                 return ResponseVO.errorResponse(FriendShipErrorCodeEnum.CREATE_FRIEND_GROUP_ERROR);
             }
         } else {
@@ -79,8 +80,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
             groupDAO = new ImFriendshipGroupDAO();
             groupDAO.setId(imFriendshipGroupDAO.getId());
             groupDAO.setDelFlag(DelFlagEnum.NORMAL.getCode());
-            groupDAO.setUpdateTime(System.currentTimeMillis());
-
+            groupDAO.setUpdateTime(currentTime);
             this.imFriendshipGroupMapper.updateById(groupDAO);
         }
 
@@ -89,7 +89,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
         req.getFriendIdList().forEach(friendId -> {
             try {
                 int insert = this.imFriendshipGroupMemberService.addGroupMember(groupDAO.getId(), friendId);
-                if(insert == 1) {
+                if (insert == 1) {
                     addGroupResp.getSuccessUserIdList().add(friendId);
                 } else {
                     addGroupResp.getFailUserIdList().add(friendId);
@@ -112,12 +112,12 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
     public ResponseVO<?> removeGroup(RemoveFriendshipGroupReq req) {
         // 1. 首先判断用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
-        if(singleUserInfo == null || !singleUserInfo.isOk()) {
+        if (singleUserInfo == null || !singleUserInfo.isOk()) {
             return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
 
         DeleteFriendshipGroupResp resp = new DeleteFriendshipGroupResp();
-        for(String groupName: req.getGroupNameList()) {
+        for (String groupName: req.getGroupNameList()) {
             // 2. 先查询是否存在该分组
             QueryWrapper<ImFriendshipGroupDAO> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("app_id", req.getAppId())
@@ -126,7 +126,7 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
                     .eq("del_flag", DelFlagEnum.NORMAL.getCode());
 
             ImFriendshipGroupDAO imFriendshipGroupDAO = this.imFriendshipGroupMapper.selectOne(queryWrapper);
-            if(imFriendshipGroupDAO == null) {
+            if (imFriendshipGroupDAO == null) {
                 resp.getFailGroupItemList().add(new DeleteFriendshipGroupResp.ResultItem(
                         groupName, FriendShipErrorCodeEnum.FRIEND_GROUP_NOT_EXISTS.getError()));
                 continue;
@@ -137,9 +137,10 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
             updateGroupDAO.setUpdateTime(System.currentTimeMillis());
             updateGroupDAO.setDelFlag(DelFlagEnum.DELETED.getCode());
             int deleteResult = this.imFriendshipGroupMapper.updateById(updateGroupDAO);
-            if(deleteResult != 1) {
+            if (deleteResult != 1) {
                 resp.getFailGroupItemList().add(new DeleteFriendshipGroupResp.ResultItem(
                         groupName, FriendShipErrorCodeEnum.DELETE_FRIEND_GROUP_ERROR.getError()));
+                continue;
             }
             resp.getSuccessGroupNameList().add(groupName);
             this.imFriendshipGroupMemberService.clearGroupMember(imFriendshipGroupDAO.getId());

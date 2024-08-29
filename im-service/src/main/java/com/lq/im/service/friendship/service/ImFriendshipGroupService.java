@@ -15,7 +15,6 @@ public interface ImFriendshipGroupService {
      */
     ResponseVO<?> addGroup(AddFriendshipGroupReq req);
 
-
     /**
      * 删除好友分组
      * @param req 请求

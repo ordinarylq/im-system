@@ -11,6 +11,9 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 
+/**
+ * 好友/关系链请求操作
+ */
 @RestController
 @RequestMapping("/api/v1/friendship-request")
 public class ImFriendshipRequestController {

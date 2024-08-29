@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
+/**
+ * 好友/关系链操作
+ */
 @RestController
 @RequestMapping("/api/v1/friendship")
 public class ImFriendshipController {

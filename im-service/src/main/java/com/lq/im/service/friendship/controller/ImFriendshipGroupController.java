@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
+/**
+ * 好友/关系链分组操作
+ */
 @RestController
 @RequestMapping("/api/v1/friendship/group")
 public class ImFriendshipGroupController {

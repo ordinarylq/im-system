@@ -68,14 +68,14 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
     public ResponseVO<?> addMultipleMembers(AddFriendshipGroupMemberReq req) {
         // 1. 首先判断用户是否存在
         ResponseVO<ImUserDAO> singleUserInfo = this.imUserService.getSingleUserInfo(req.getUserId(), req.getAppId());
-        if(singleUserInfo == null || !singleUserInfo.isOk()) {
+        if (singleUserInfo == null || !singleUserInfo.isOk()) {
             // 不存在则返回用户不存在
             return ResponseVO.errorResponse(UserErrorCodeEnum.USER_NOT_EXIST);
         }
 
         // 2. 先判断分组是否存在
         ResponseVO<ImFriendshipGroupDAO> groupInfoResp = this.imFriendshipGroupService.getGroup(req.getAppId(), req.getUserId(), req.getGroupName());
-        if(!groupInfoResp.isOk()) {
+        if (!groupInfoResp.isOk()) {
             return groupInfoResp;
         }
         // 3. 遍历待添加的好友列表
@@ -83,17 +83,16 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
         for (String friendUserId : req.getFriendIdList()) {
             // 2.1 若好友不存在则添加到失败列表中
             ResponseVO<ImUserDAO> friendUserInfo = this.imUserService.getSingleUserInfo(friendUserId, req.getAppId());
-            if(friendUserInfo == null || !friendUserInfo.isOk()) {
+            if (friendUserInfo == null || !friendUserInfo.isOk()) {
                 resp.getFailUserItemList().add(new AddFriendshipGroupMemberResp.ResultItem(
                         friendUserId, UserErrorCodeEnum.USER_NOT_EXIST.getError()));
                 continue;
             }
             // 2.2 好友存在则执行插入
             ImFriendshipGroupMemberDAO groupMemberDAO = new ImFriendshipGroupMemberDAO(groupInfoResp.getData().getId(), friendUserId);
-
             try {
                 int insert = this.imFriendshipGroupMemberMapper.insert(groupMemberDAO);
-                if(insert == 1) {
+                if (insert == 1) {
                     resp.getSuccessUserIdList().add(friendUserId);
                 } else {
                     resp.getFailUserItemList().add(new AddFriendshipGroupMemberResp.ResultItem

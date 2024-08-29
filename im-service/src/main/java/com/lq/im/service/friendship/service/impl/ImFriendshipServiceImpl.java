@@ -91,7 +91,8 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
     @Override
     public ResponseVO<?> addFriendship(AddFriendshipReq req) {
         // 1. 判断这两个用户是否存在
-        ResponseVO<ImUserDAO> friendUserInfo = checkIfTwoUsersExist(req.getAppId(), req.getUserId(), req.getFriendInfo().getFriendUserId());
+        ResponseVO<ImUserDAO> friendUserInfo = checkIfTwoUsersExist(req.getAppId(), req.getUserId(),
+                req.getFriendInfo().getFriendUserId());
         if (!friendUserInfo.isOk()) {
             return friendUserInfo;
         }
@@ -103,7 +104,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             }
         }
         // 2. 添加
-        if(Objects.equals(friendUserInfo.getData().getFriendAllowType(), AddFriendshipEnum.NO_NEED_TO_CONFIRM.getCode())) {
+        if (Objects.equals(friendUserInfo.getData().getFriendAllowType(), AddFriendshipEnum.NO_NEED_TO_CONFIRM.getCode())) {
             // 不需要确认
             UserClientDTO userClient = new UserClientDTO(req.getAppId(), req.getClientType(), req.getUserId(), req.getImei());
             return doInternalAddFriend(userClient, req.getFriendInfo());
@@ -115,7 +116,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                     .eq("from_id", req.getUserId())
                     .eq("to_id", req.getFriendInfo().getFriendUserId());
             ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
-            if(imFriendshipDAO == null || imFriendshipDAO.getStatus() != FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode()) {
+            if (imFriendshipDAO == null || imFriendshipDAO.getStatus() != FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode()) {
                 // 不是则添加一条申请
                 return this.imFriendshipRequestService.addFriendRequest(req.getAppId(), req.getUserId(), req.getFriendInfo());
             } else {
@@ -125,18 +126,20 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         }
     }
 
+    /**
+     * 检查是否存在这两个用户
+     */
     private ResponseVO<ImUserDAO> checkIfTwoUsersExist(Integer appId, String oneUserId, String friendUserId) {
         ResponseVO<ImUserDAO> oneUserInfo = imUserService.getSingleUserInfo(oneUserId, appId);
         if (!oneUserInfo.isOk()) {
             return oneUserInfo;
         }
-        ResponseVO<ImUserDAO> friendUserInfo = imUserService.getSingleUserInfo(friendUserId, appId);
-        if (!friendUserInfo.isOk()) {
-            return friendUserInfo;
-        }
-        return friendUserInfo;
+        return imUserService.getSingleUserInfo(friendUserId, appId);
     }
 
+    /**
+     * 双向好友添加
+     */
     @Transactional
     public ResponseVO<?> doInternalAddFriend(UserClientDTO userClient, FriendInfo friendInfo) {
         // a添加b
@@ -268,13 +271,12 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                 .eq("to_id", req.getFriendUserId());
         ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
         // 2.1 若没有关系则返回不是好友
-        if(imFriendshipDAO == null) {
+        if (imFriendshipDAO == null) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.OTHER_PERSON_IS_NOT_YOUR_FRIEND);
         }
         // 2.2 若有关系且状态为正常，则更新状态为删除
-        if(imFriendshipDAO.getStatus() != null &&
-                imFriendshipDAO.getStatus() == FriendshipStatusEnum.BLOCK_STATUS_NORMAL.getCode()) {
-
+        if (imFriendshipDAO.getStatus() != null &&
+                imFriendshipDAO.getStatus() == FriendshipStatusEnum.FRIEND_STATUS_NORMAL.getCode()) {
             ImFriendshipDAO imFriendshipDAO1 = new ImFriendshipDAO();
             imFriendshipDAO1.setStatus(FriendshipStatusEnum.FRIEND_STATUS_DELETE.getCode());
             int updateResult = this.imFriendshipMapper.update(imFriendshipDAO1, queryWrapper);
@@ -341,7 +343,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
                 .eq("from_id", req.getUserId())
                 .eq("to_id", req.getFriendUserId());
         ImFriendshipDAO imFriendshipDAO = this.imFriendshipMapper.selectOne(queryWrapper);
-        if(imFriendshipDAO == null) {
+        if (imFriendshipDAO == null) {
             return ResponseVO.errorResponse(FriendShipErrorCodeEnum.FRIENDSHIP_IS_NOT_EXIST);
         }
         return ResponseVO.successResponse(imFriendshipDAO);
@@ -354,7 +356,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
             return oneUserInfo;
         }
         List<CheckFriendshipResp> resp;
-        if(Objects.equals(req.getCheckType(), FriendshipCheckEnum.SINGLE.getType())) {
+        if (Objects.equals(req.getCheckType(), FriendshipCheckEnum.SINGLE.getType())) {
             // 1-单向校验
             resp = this.imFriendshipMapper.singleCheckFriendshipStatus(req);
         } else {
@@ -364,7 +366,7 @@ public class ImFriendshipServiceImpl implements ImFriendshipService {
         // 将不在im_friendship中的好友取出
         Set<String> respIdSet = resp.stream().map(CheckFriendshipResp::getToId).collect(Collectors.toSet());
         for (String friendId : req.getFriendIdList()) {
-            if(!respIdSet.contains(friendId)) {
+            if (!respIdSet.contains(friendId)) {
                 CheckFriendshipResp checkFriendshipResp = new CheckFriendshipResp(req.getAppId(), req.getUserId(),
                         friendId, FriendshipStatusEnum.FRIEND_STATUS_NO_FRIEND.getCode());
                 resp.add(checkFriendshipResp);

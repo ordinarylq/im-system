@@ -42,7 +42,8 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
                 .eq("to_id", friendInfo.getFriendUserId());
 
         ImFriendshipRequestDAO imFriendshipRequestDAO = this.imFriendshipRequestMapper.selectOne(queryWrapper);
-        if(imFriendshipRequestDAO != null) {
+        long currentTime = System.currentTimeMillis();
+        if (imFriendshipRequestDAO != null) {
             // 如果已存在则更新字段：申请附加信息、更新时间
             Long id = imFriendshipRequestDAO.getId();
             imFriendshipRequestDAO = new ImFriendshipRequestDAO();
@@ -56,13 +57,13 @@ public class ImFriendshipRequestServiceImpl implements ImFriendshipRequestServic
             if(StringUtils.isNotEmpty(friendInfo.getAddSource())) {
                 imFriendshipRequestDAO.setAddSource(friendInfo.getAddSource());
             }
-            imFriendshipRequestDAO.setUpdateTime(System.currentTimeMillis());
+            imFriendshipRequestDAO.setUpdateTime(currentTime);
             this.imFriendshipRequestMapper.updateById(imFriendshipRequestDAO);
         } else {
             // 如果不存在则插入一条数据
             imFriendshipRequestDAO = new ImFriendshipRequestDAO(null, appId, userId, friendInfo.getFriendUserId(),
                     0, friendInfo.getAddWording(), friendInfo.getRemark(), 0,
-                    System.currentTimeMillis(), System.currentTimeMillis(), null, friendInfo.getAddSource());
+                    currentTime, currentTime, null, friendInfo.getAddSource());
             this.imFriendshipRequestMapper.insert(imFriendshipRequestDAO);
         }
         this.messageUtils.sendMessageToAllDevicesOfOneUser(appId, friendInfo.getFriendUserId(),
