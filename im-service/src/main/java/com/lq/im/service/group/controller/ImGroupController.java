@@ -34,7 +34,7 @@ public class ImGroupController {
         return this.imGroupService.updateGroupInfo(req);
     }
 
-    @GetMapping("")
+    @GetMapping()
     public ResponseVO<?> getGroupWithMemberList(@RequestParam("app-id") Integer appId,
                                                 @RequestParam("group-id") @NotBlank String groupId) {
         return this.imGroupService.getGroupWithMemberList(appId, groupId);

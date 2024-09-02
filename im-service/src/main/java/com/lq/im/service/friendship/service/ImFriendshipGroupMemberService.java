@@ -8,31 +8,21 @@ public interface ImFriendshipGroupMemberService {
 
     /**
      * 添加用户到指定用户分组
-     * @param groupId 分组id
-	 * @param userId 用户id
-     * @return Integer
      */
     Integer addGroupMember(Long groupId, String userId);
 
     /**
-     * 清空指定用户分组的成员
-     * @param groupId 用户分组id
-     * @return Integer 删除的成员的个数
+     * 清空指定用户分组的所有成员
      */
     Integer clearGroupMember(Long groupId);
 
     /**
-     * 添加多个用户到指定分组中
-     * @param req 请求(包括多个用户id)
-     * @return ResponseVO
+     * 添加多个用户到指定用户分组
      */
     ResponseVO<?> addMultipleMembers(AddFriendshipGroupMemberReq req);
 
-
     /**
-     * 删除指定分组的多个用户
-     * @param req 请求(包含多个用户id)
-     * @return ResponseVO
+     * 删除指定用户分组的多个用户
      */
     ResponseVO<?> removeMultipleMembers(RemoveFriendshipGroupMemberReq req);
 }

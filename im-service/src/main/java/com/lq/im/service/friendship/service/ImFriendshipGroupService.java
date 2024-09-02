@@ -10,15 +10,11 @@ public interface ImFriendshipGroupService {
     /**
      * 添加好友分组
      * 支持添加分组时添加分组包含的好友
-     * @param req 请求
-     * @return ResponseVO
      */
     ResponseVO<?> addGroup(AddFriendshipGroupReq req);
 
     /**
      * 删除好友分组
-     * @param req 请求
-     * @return ResponseVO
      */
     ResponseVO<?> removeGroup(RemoveFriendshipGroupReq req);
 

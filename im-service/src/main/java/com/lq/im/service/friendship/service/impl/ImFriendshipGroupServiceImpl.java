@@ -41,7 +41,6 @@ public class ImFriendshipGroupServiceImpl implements ImFriendshipGroupService {
     @Resource
     private MessageUtils messageUtils;
 
-
     @Override
     public ResponseVO<?> addGroup(AddFriendshipGroupReq req) {
         // 1. 首先判断用户是否存在

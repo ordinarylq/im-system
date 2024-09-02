@@ -81,14 +81,14 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
         // 3. 遍历待添加的好友列表
         AddFriendshipGroupMemberResp resp = new AddFriendshipGroupMemberResp();
         for (String friendUserId : req.getFriendIdList()) {
-            // 2.1 若好友不存在则添加到失败列表中
+            // 2.1 若好友用户不存在则添加到失败列表中
             ResponseVO<ImUserDAO> friendUserInfo = this.imUserService.getSingleUserInfo(friendUserId, req.getAppId());
             if (friendUserInfo == null || !friendUserInfo.isOk()) {
                 resp.getFailUserItemList().add(new AddFriendshipGroupMemberResp.ResultItem(
                         friendUserId, UserErrorCodeEnum.USER_NOT_EXIST.getError()));
                 continue;
             }
-            // 2.2 好友存在则执行插入
+            // 2.2 好友用户存在则执行插入
             ImFriendshipGroupMemberDAO groupMemberDAO = new ImFriendshipGroupMemberDAO(groupInfoResp.getData().getId(), friendUserId);
             try {
                 int insert = this.imFriendshipGroupMemberMapper.insert(groupMemberDAO);
@@ -96,7 +96,7 @@ public class ImFriendshipGroupMemberServiceImpl implements ImFriendshipGroupMemb
                     resp.getSuccessUserIdList().add(friendUserId);
                 } else {
                     resp.getFailUserItemList().add(new AddFriendshipGroupMemberResp.ResultItem
-                            (friendUserId, FriendShipErrorCodeEnum.FRIEND_GROUP_ALREADY_EXISTS.getError()));
+                            (friendUserId, FriendShipErrorCodeEnum.FRIEND_IS_IN_GROUP.getError()));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

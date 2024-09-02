@@ -22,14 +22,14 @@ public class ImFriendshipGroupController {
     @Resource
     private ImFriendshipGroupMemberService imFriendshipGroupMemberService;
 
-    @PostMapping("")
+    @PostMapping()
     public ResponseVO<?> addFriendshipGroup(@RequestBody @Valid AddFriendshipGroupReq req,
                                          @RequestParam("app-id") Integer appId) {
         req.setAppId(appId);
         return this.imFriendshipGroupService.addGroup(req);
     }
 
-    @DeleteMapping("")
+    @DeleteMapping()
     public ResponseVO<?> removeFriendshipGroup(@RequestBody @Valid RemoveFriendshipGroupReq req,
                                             @RequestParam("app-id") Integer appId) {
         req.setAppId(appId);
