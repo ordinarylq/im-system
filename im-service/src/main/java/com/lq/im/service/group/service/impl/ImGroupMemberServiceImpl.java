@@ -286,9 +286,6 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         if (!memberInfoResp.isOk()) {
             return memberInfoResp;
         }
-        if (memberInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
-            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
-        }
         ImGroupMemberDAO groupDAO = new ImGroupMemberDAO();
         groupDAO.setId(memberInfoResp.getData().getId());
         groupDAO.setMemberRole(GroupMemberRoleEnum.LEAVE.getCode());
@@ -310,7 +307,8 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         QueryWrapper<ImGroupMemberDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("app_id", appId)
                 .eq("group_id", groupId)
-                .eq("member_id", memberId);
+                .eq("member_id", memberId)
+                .ne("member_role", GroupMemberRoleEnum.LEAVE.getCode());
         ImGroupMemberDAO memberDAO = this.imGroupMemberMapper.selectOne(queryWrapper);
         if (memberDAO == null) {
             return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
@@ -388,6 +386,9 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
     @Override
     @Transactional
     public ResponseVO<?> updateGroupMemberInfo(UpdateGroupMemberReq req) {
+        if (req.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode()) {
+            return ResponseVO.errorResponse(GroupErrorCodeEnum.CAN_NOT_CHANGE_GROUP_OWNER);
+        }
         ResponseVO<?> response = this.imGroupService.getGroup(req.getAppId(), req.getGroupId());
         if (!response.isOk()) {
             return response;
@@ -399,9 +400,6 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         if (!memberInfoResp.isOk()) {
             return memberInfoResp;
         }
-        if (memberInfoResp.getData().getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
-            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
-        }
         // 2. 权限控制
         boolean isAdmin = false;
         if (!isAdmin) {
@@ -412,11 +410,9 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
             if (req.getMemberRole() != null) {
                 // 私有群不能设置管理员
                 if (groupInfo.getGroupType() == GroupTypeEnum.PRIVATE.getCode() &&
-                        (req.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode() ||
-                                req.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode())) {
+                        (req.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode())) {
                     return ResponseVO.errorResponse(GroupErrorCodeEnum.CAN_NOT_SET_MANAGER_IN_PRIVATE_GROUP);
                 }
-
                 // 获取操作人的成员信息
                 ResponseVO<ImGroupMemberDAO> operatorMemberInfoResp =
                         this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
@@ -440,7 +436,7 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
         if (StringUtils.isNotEmpty(req.getAlias())) {
             memberDTO.setAlias(req.getAlias());
         }
-        if (req.getMemberRole() != null && req.getMemberRole() != GroupMemberRoleEnum.OWNER.getCode()) {
+        if (req.getMemberRole() != null) {
             memberDTO.setMemberRole(req.getMemberRole());
         }
         UserClientDTO userClient = new UserClientDTO();
@@ -461,9 +457,6 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
             return operatorInfoResp;
         }
         ImGroupMemberDAO operatorInfo = operatorInfoResp.getData();
-        if (operatorInfo.getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
-            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
-        }
         // 被禁言人信息
         ResponseVO<ImGroupMemberDAO> memberInfoResp =
                 this.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getMemberId());
@@ -471,9 +464,6 @@ public class ImGroupMemberServiceImpl implements ImGroupMemberService {
             return memberInfoResp;
         }
         ImGroupMemberDAO memberInfo = memberInfoResp.getData();
-        if (memberInfo.getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
-            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
-        }
         boolean isAdmin = false;
         if (!isAdmin) {
             boolean isOperatorManager = operatorInfo.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode();

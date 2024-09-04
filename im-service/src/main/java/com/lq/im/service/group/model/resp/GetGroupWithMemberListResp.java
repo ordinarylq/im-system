@@ -29,7 +29,6 @@ public class GetGroupWithMemberListResp {
     /**
      * 群组名称
      */
-    @NotBlank(message = "群组名称不能为空")
     private String groupName;
 
     /**

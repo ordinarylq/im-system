@@ -159,7 +159,7 @@ public class ImGroupServiceImpl implements ImGroupService {
         ImGroupDAO originalGroupInfo = responseVO.getData();
         boolean isAdmin = false;
         if (!isAdmin) {
-            // 1. 检查操作人角色
+            // 1. 检查操作人是否有权限
             ResponseVO<ImGroupMemberDAO> memberInfoResponseVO =
                     this.imGroupMemberService.getGroupMemberInfo(req.getAppId(), req.getGroupId(), req.getOperator());
             if (!memberInfoResponseVO.isOk()) {
@@ -241,9 +241,11 @@ public class ImGroupServiceImpl implements ImGroupService {
         }
         List<String> groupIdList = (List<String>) response.getData();
         QueryWrapper<ImGroupDAO> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("app_id", req.getAppId())
-                .in("group_type", req.getGroupTypeList())
-                .in("group_id", groupIdList);
+        queryWrapper.eq("app_id", req.getAppId());
+        if (!req.getGroupTypeList().isEmpty()) {
+            queryWrapper.in("group_type", req.getGroupTypeList());
+        }
+        queryWrapper.in("group_id", groupIdList);
         List<ImGroupDAO> groupDAOList;
         try {
             groupDAOList = this.imGroupMapper.selectList(queryWrapper);
@@ -323,9 +325,9 @@ public class ImGroupServiceImpl implements ImGroupService {
                 return operatorMemberInfoResponse;
             }
             ImGroupMemberDAO operatorMemberInfo = operatorMemberInfoResponse.getData();
-            boolean isManager = operatorMemberInfo.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode();
-            // 公开群只有群主可以移交群
-            if (groupInfo.getGroupType() == GroupTypeEnum.PUBLIC.getCode() && !isManager) {
+            boolean isOwner = operatorMemberInfo.getMemberRole() == GroupMemberRoleEnum.OWNER.getCode();
+            // 只有群主可以移交群
+            if (!isOwner) {
                 return ResponseVO.errorResponse(GroupErrorCodeEnum.THIS_OPERATION_NEEDS_OWNER_ROLE);
             }
         }
@@ -348,6 +350,7 @@ public class ImGroupServiceImpl implements ImGroupService {
             log.error(ERROR_MESSAGE, e);
             return ResponseVO.errorResponse(GroupErrorCodeEnum.UPDATE_GROUP_BASE_INFO_ERROR);
         }
+        // 更新操作人（原群组）为普通群成员
         ImGroupMemberDTO memberDTO = new ImGroupMemberDTO();
         memberDTO.setMemberId(req.getOperator());
         memberDTO.setMemberRole(GroupMemberRoleEnum.ORDINARY.getCode());
@@ -358,6 +361,7 @@ public class ImGroupServiceImpl implements ImGroupService {
         if (!updateOwnerMemberResp.isOk()) {
             return updateOwnerMemberResp;
         }
+        // 更新被移交人为群主
         memberDTO = new ImGroupMemberDTO();
         memberDTO.setMemberId(req.getAssigneeId());
         memberDTO.setMemberRole(GroupMemberRoleEnum.OWNER.getCode());
@@ -389,9 +393,6 @@ public class ImGroupServiceImpl implements ImGroupService {
                 return operatorInfoResp;
             }
             ImGroupMemberDAO operatorInfo = operatorInfoResp.getData();
-            if (operatorInfo.getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
-                return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
-            }
             boolean isManager = operatorInfo.getMemberRole() == GroupMemberRoleEnum.MANAGER.getCode();
             boolean isOwner = operatorInfo.getMemberRole() ==GroupMemberRoleEnum.OWNER.getCode();
             if (!(isManager || isOwner)) {

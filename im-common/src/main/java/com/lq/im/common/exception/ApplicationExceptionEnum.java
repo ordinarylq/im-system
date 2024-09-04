@@ -161,6 +161,9 @@ public interface ApplicationExceptionEnum {
     int CAN_NOT_SET_MANAGER_IN_PRIVATE_GROUP_CODE = 40024;
     String CAN_NOT_SET_MANAGER_IN_PRIVATE_GROUP_MESSAGE = "私有群不能设置管理员";
 
+    int CAN_NOT_CHANGE_GROUP_OWNER_CODE = 40025;
+    String CAN_NOT_CHANGE_GROUP_OWNER_MESSAGE = "该操作不允许修改群组";
+
     int SERVER_NOT_AVAILABLE_CODE = 71000;
     String SERVER_NOT_AVAILABLE_MESSAGE = "没有可用的服务";
 

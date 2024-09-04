@@ -117,11 +117,7 @@ public class MessageCheckService {
         if (!memberInfoResp.isOk()) {
             return memberInfoResp;
         }
-        // 判断是否离开
         ImGroupMemberDAO memberInfo = memberInfoResp.getData();
-        if (memberInfo.getMemberRole() == GroupMemberRoleEnum.LEAVE.getCode()) {
-            return ResponseVO.errorResponse(GroupErrorCodeEnum.USER_DID_NOT_JOIN_GROUP);
-        }
         // 2.3 群是否被禁言，若禁言则只有管理员、群主可以发言
         if (!canSpeakInGroup(groupInfo, memberInfo)) {
             return ResponseVO.errorResponse(GroupErrorCodeEnum.GROUP_IS_MUTED);

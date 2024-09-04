@@ -17,6 +17,7 @@ public interface ImGroupService {
      * 需要进行权限控制：如果不是后台调用，对于公开群，只有管理员或者群主可以执行更新操作。
      */
     ResponseVO<?> updateGroupInfo(UpdateGroupInfoReq req);
+
     ResponseVO<ImGroupDAO> getGroup(Integer appId, String groupId);
 
     ResponseVO<?> getGroupWithMemberList(Integer appId, String groupId);
